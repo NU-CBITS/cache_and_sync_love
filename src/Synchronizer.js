@@ -1,40 +1,71 @@
 (function(context) {
   'use strict';
 
+  function markCacheRecordsClean(response) {
+    var cache;
+
+    if (response.data.length === 0) { return; }
+
+    cache = Synchronizer.getCache(response.data[0].type);
+
+    if (!cache) { return; }
+
+    cache.markClean(this.connection, response.data.map(function(d) {
+      return d.uuid;
+    }));
+  }
+
+  function persistData(dirtyData) {
+    return this.payload.persist(dirtyData);
+  }
+
+  function collectDirtyData(cache) {
+    return cache.fetchAllDirty(this.connection);
+  }
+
+  function persistDirtyData() {
+    return Promise.all(this.caches.map(collectDirtyData.bind(this)))
+      .then(persistData.bind(this))
+      .then(markCacheRecordsClean.bind(this));
+  }
+
+  function persistClean(datum) {
+    var cache = Synchronizer.getCache(datum.type);
+
+    if (cache) {
+      cache.persist(this.connection, datum);
+      cache.markClean(this.connection, datum.uuid);
+    }
+  }
+
+  function fetchData() {
+    return this.payload.fetch().then((function(response) {
+      response.data.forEach(persistClean.bind(this));
+    }).bind(this));
+  }
+
   var Synchronizer = {
     PERIOD_IN_MS: 30 * 1000,
 
-    setConnection: function setConnection(connection) {
+    setDbConnection: function setDbConnection(connection) {
       this.connection = connection;
     },
 
-    persistDirtyData: function persistDirtyData() {
-      var connection = ResourceCache.connectToDb(),
-          dirtyData = [];
-      Promise.all(this.caches.map(function collectDirtyData(cache) {
-        return cache.fetchAllDirty(connection).then(function addDirtyRecords(records) {
-          dirtyData = dirtyData.concat(records);
-        });
-      }, cache)).then(function markCachesClean() {
-        payloads.persist(dirtyData).then(function markCacheClean(response) {
-          response.data.forEach(function markRecordClean(datum) {
-            var cache = Synchronizer.getCache(datum.type);
+    setNetwork: function setNetwork(network) {
+      this.network = network;
+    },
 
-            if (cache) {
-              cache.markClean(connection, datum.uuid);
-            }
-          });
-        });
-      });
+    setPayloadResource: function setPayloadResource(payload) {
+      this.payload = payload;
     },
 
     synchronize: function synchronize() {
-      if (!this.connection.hasConnection()) {
-        return;
-      }
+      if (!this.network.hasConnection()) { return; }
 
-      this.persistDirtyData();
-      this.fetchData();
+      return Promise.all([
+        persistDirtyData.bind(this)(),
+        fetchData.bind(this)()
+      ]);
     },
 
     run: function run() {
@@ -43,14 +74,21 @@
     },
 
     registerCache: function registerCache(cache) {
-      this.cacheTypeIndices[cache.KEY] = this.caches.length;
+      this.cacheTypeIndices[cache.name] = this.caches.length;
       this.caches.push(cache);
     },
 
     getCache: function getCache(type) {
       return this.caches[this.cacheTypeIndices[type]];
+    },
+
+    resetCaches: function resetCaches() {
+      this.caches = [];
+      this.cacheTypeIndices = {};
     }
   };
+
+  Synchronizer.resetCaches();
 
   context.Synchronizer = Synchronizer;
 })(this);

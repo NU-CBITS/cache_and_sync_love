@@ -12,5 +12,6 @@
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, replacement);
   }
 
-  context.uuid = uuid;
+  context.cbit = context.cbit || {};
+  context.cbit.uuid = uuid;
 })(this);

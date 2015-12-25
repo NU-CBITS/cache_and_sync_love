@@ -38,10 +38,7 @@ module.exports = function(config) {
           functions: 50,
           lines: 50
         }
-      },
-      reporters: [
-        { type: 'lcov', subdir: 'report-lcov' }
-      ]
+      }
     },
 
     // test results reporter to use
@@ -64,11 +61,11 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome', 'Firefox', 'PhantomJS'],
+    browsers: ['PhantomJS'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultanous

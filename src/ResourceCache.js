@@ -36,14 +36,14 @@
         .addColumn('updated_at', lf.Type.DATE_TIME);
     },
 
-    markClean: function markClean(connection, recordUuid) {
+    markClean: function markClean(connection, recordUuids) {
       return connection.then((function(db) {
         var table = this.getTable(db);
 
         return db
           .update(table)
           .set(table.is_dirty, false)
-          .where(table.uuid.eq(recordUuid))
+          .where(table.uuid.in(recordUuids))
           .exec();
       }).bind(this));
     },
@@ -58,7 +58,7 @@
 
     fetchAll: function fetchAll(connection) {
       return connection.then((function(db) {
-        return db.select().from(this.getTable(db));
+        return db.select().from(this.getTable(db)).exec();
       }).bind(this));
     },
 
@@ -66,7 +66,7 @@
       return connection.then((function(db) {
         var table = this.getTable(db);
         
-        return db.select().from(table).where(table.is_dirty.eq(true));
+        return db.select().from(table).where(table.is_dirty.eq(true)).exec();
       }).bind(this));
     },
 
@@ -74,7 +74,7 @@
       return connection.then((function(db) {
         var table = this.getTable(db),
             dirtyRecord = Object.create(record);
-        dirtyRecord.uuid = uuid();
+        dirtyRecord.uuid = cbit.uuid();
         dirtyRecord.created_at = new Date();
         dirtyRecord.updated_at = new Date();
         dirtyRecord.is_dirty = true;

@@ -52,7 +52,7 @@ describe('ResourceCache', function() {
         var connection = cache.connectToDb();
         cache.persist(connection, {}).then(function(records) {
           var uuid = records[0].uuid;
-          cache.markClean(connection, uuid).then(function() {
+          cache.markClean(connection, [uuid]).then(function() {
             cache.fetch(connection, uuid).then(function(records) {
               if (records[0].is_dirty === false) {
                 done();
@@ -61,6 +61,48 @@ describe('ResourceCache', function() {
               }
             });
           });
+        });
+      });
+    });
+  });
+
+  describe('#fetchAll', function() {
+    it('returns all records in the table', function(done) {
+      var cache = Object.create(ResourceCache);
+      cache.setSchemaBuilder(getSchemaBuilder());
+      cache.setTableName('my_table');
+      cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+      cache.createTable();
+      var connection = cache.connectToDb();
+      cache.persist(connection, {}).then(function(records) {
+        var uuid = records[0].uuid;
+        cache.fetchAll(connection).then(function(records) {
+          if (records[0].uuid === uuid) {
+            done();
+          } else {
+            done.fail('record should be returned');
+          }
+        });
+      });
+    });
+  });
+
+  describe('#fetchAllDirty', function() {
+    it('returns all dirty records in the table', function(done) {
+      var cache = Object.create(ResourceCache);
+      cache.setSchemaBuilder(getSchemaBuilder());
+      cache.setTableName('my_table');
+      cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+      cache.createTable();
+      var connection = cache.connectToDb();
+      cache.persist(connection, {}).then(function(records) {
+        var uuid = records[0].uuid;
+        cache.fetchAllDirty(connection).then(function(records) {
+          if (records[0].uuid === uuid) {
+            done();
+          } else {
+            done.fail('record should be returned');
+          }
         });
       });
     });
