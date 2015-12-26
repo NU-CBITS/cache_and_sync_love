@@ -90,5 +90,6 @@
 
   Synchronizer.resetCaches();
 
-  context.Synchronizer = Synchronizer;
+  context.cbit = context.cbit || {};
+  context.cbit.Synchronizer = Synchronizer;
 })(this);

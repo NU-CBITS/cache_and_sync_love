@@ -85,5 +85,6 @@
     }
   };
 
-  context.ResourceCache = ResourceCache;
+  context.cbit = context.cbit || {};
+  context.cbit.ResourceCache = ResourceCache;
 })(this);

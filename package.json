@@ -12,5 +12,9 @@
     "karma-jasmine": "^0.3.6",
     "karma-phantomjs-launcher": "^0.2.1",
     "phantomjs": "^1.9.19"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/eslint src test && node_modules/karma/bin/karma start",
+    "test:ci": "node_modules/.bin/eslint src test && node_modules/karma/bin/karma start karma-ci.conf.js"
   }
 }

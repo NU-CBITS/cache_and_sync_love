@@ -1,5 +1,7 @@
 'use strict';
 
+var Synchronizer = cbit.Synchronizer;
+
 describe('Synchronizer', function() {
   afterEach(function() {
     Synchronizer.resetCaches();
@@ -41,12 +43,12 @@ describe('Synchronizer', function() {
         persist: function(data) {
           dataPersisted = data;
 
-          return new Promise(function(resolve, reject) {
+          return new Promise(function(resolve) {
             resolve({ data: [datum] });
           });
         },
         fetch: function() {
-          return new Promise(function(resolve, reject) {
+          return new Promise(function(resolve) {
             resolve(fetchedPayload);
           });
         }
@@ -57,7 +59,7 @@ describe('Synchronizer', function() {
           var cache = {
             name: 'mockCache',
             fetchAllDirty: function() {
-              return new Promise(function(resolve, reject) {
+              return new Promise(function(resolve) {
                 resolve([datum]);
               });
             },
@@ -84,17 +86,17 @@ describe('Synchronizer', function() {
             var cache = {
               name: 'mockCache',
               fetchAllDirty: function() {
-                return new Promise(function(resolve, reject) {
+                return new Promise(function(resolve) {
                   resolve([]);
                 });
               },
               persist: function() {
-                return new Promise(function(resolve, reject) {
+                return new Promise(function(resolve) {
                   resolve([]);
                 });
               },
               markClean: function() {
-                return new Promise(function(resolve, reject) {
+                return new Promise(function(resolve) {
                   resolve([]);
                 });
               }

@@ -1,5 +1,7 @@
 'use strict';
 
+var ResourceCache = cbit.ResourceCache;
+
 describe('ResourceCache', function() {
   var DB_NAME = 'app_test';
 
