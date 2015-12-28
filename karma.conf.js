@@ -16,6 +16,7 @@ module.exports = function(config) {
       'test/support/bind-polyfill.js',
       'test/support/es6-promise.min.js',
       'node_modules/lovefield/dist/lovefield.min.js',
+      'vendor/**/*.js',
       'src/**/*.js',
       'test/**/*Spec.js'
     ],

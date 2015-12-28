@@ -5,7 +5,9 @@
   },
   'globals': {
     'cbit': true,
-    'lf': true
+    'hash': true,
+    'lf': true,
+    'md5': true
   },
   // the following rules should be kept in alphabetical order
   'rules': {
