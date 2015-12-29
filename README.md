@@ -39,3 +39,16 @@ npm run build
 ```
 
 It will create the minified file `dist/cache_and_sync_love.min.js`.
+
+To publish, once all changes have been committed, run
+
+```
+npm version <type>
+npm publish
+```
+
+See the documentation for `npm version` with
+
+```
+npm help version
+```
