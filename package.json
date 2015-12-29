@@ -3,7 +3,12 @@
   "version": "0.0.1",
   "author": "Eric Carty-Fickes <ericcf@northwestern.edu>",
   "description": "A library for use with caching and synchronizing client side data with a server.",
+  "licence": "MIT",
   "main": "./dist/cache_and_sync_love.min.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NU-CBITS/cache_and_sync_love.git"
+  },
   "dependencies": {
     "lovefield": "^2.1.3"
   },

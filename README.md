@@ -1,5 +1,18 @@
 # Cache and Sync Love
 
+## Installation
+
+This library is available via a
+[GitHub repository](https://github.com/NU-CBITS/cache_and_sync_love), but it can
+be installed with `npm` as well
+
+```
+npm i --save cache_and_sync_love
+```
+
+This will add it as a dependency to your `package.json` file and add it plus its
+dependencies to the `node_modules` folder.
+
 ## Intended use
 
 This was specifically designed for use in hybrid mobile applications, and is
