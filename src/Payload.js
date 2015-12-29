@@ -2,28 +2,52 @@
   'use strict';
 
   function nonce() {
-    return cbit.uuid();
+    function randomFixedLengthInteger(length) {
+      return Math.floor(Math.pow(10, length - 1) +
+        Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1));
+    }
+
+    return randomFixedLengthInteger(NONCE_DIGITS);
   }
 
+  var NONCE_DIGITS = 12;
   var Payload = {
     setKey: function setKey(key) {
       this.key = key;
+
+      return this;
     },
 
     setData: function setData(data) {
       this.data = data;
+
+      return this;
+    },
+
+    getDataStringified: function getDataStringified() {
+      if (this.data == null) {
+        return '';
+      }
+
+      return JSON.stringify(this.data);
     },
 
     setUrl: function setUrl(url) {
       this.url = url;
+
+      return this;
     },
 
     setMethod: function setMethod(httpMethod) {
       this.httpMethod = httpMethod;
+
+      return this;
     },
 
     setSecret: function setSecret(secret) {
       this.secret = secret;
+
+      return this;
     },
 
     getNonce: function getNonce() {
@@ -38,9 +62,9 @@
       return this.timestamp;
     },
 
-    hash: function hash() {
+    signature: function signature() {
       return md5(
-        JSON.stringify(this.data) +
+        this.getDataStringified() +
         this.key +
         this.getNonce() +
         this.getTimestamp() +
@@ -58,7 +82,18 @@
         timestamp: this.getTimestamp(),
         url: this.url,
         method: this.httpMethod,
-        hash: this.hash()
+        signature: this.signature()
+      };
+    },
+
+    toHeader: function toHeader() {
+      return {
+        Authorization: 'key="' + this.key + '"' +
+          ',nonce=' + this.getNonce() +
+          ',timestamp=' + this.getTimestamp() +
+          ',url="' + this.url + '"' +
+          ',method="' + this.httpMethod + '"' +
+          ',signature="' + this.signature() + '"'
       };
     }
   };
