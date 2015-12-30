@@ -74,18 +74,6 @@
       );
     },
 
-    toObject: function toObject() {
-      return {
-        payload: this.data,
-        key: this.key,
-        nonce: this.getNonce(),
-        timestamp: this.getTimestamp(),
-        url: this.url,
-        method: this.httpMethod,
-        signature: this.signature()
-      };
-    },
-
     toHeader: function toHeader() {
       return {
         Authorization: 'key="' + this.key + '"' +

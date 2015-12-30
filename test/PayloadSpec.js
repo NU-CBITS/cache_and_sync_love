@@ -45,20 +45,6 @@ describe('Payload', function() {
     });
   });
 
-  describe('.toObject', function() {
-    it('returns an object with the appropriate properties', function() {
-      var obj = dummyPayload().toObject();
-
-      expect(obj.payload).toEqual({ foo: 'bar' });
-      expect(obj.key).toEqual('key1');
-      expect(obj.nonce).toEqual(9876);
-      expect(obj.timestamp).toEqual(12345);
-      expect(obj.url).toEqual('https://api.example.com');
-      expect(obj.method).toEqual('POST');
-      expect(obj.signature).toEqual('253c1b316f6793c24fd1319e7aaff3b4');
-    });
-  });
-
   describe('.toHeader', function() {
     it('returns an object with the appropriate auth string', function() {
       var payload = dummyPayload();
