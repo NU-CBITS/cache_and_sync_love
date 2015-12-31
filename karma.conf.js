@@ -13,6 +13,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'node_modules/jasmine-ajax/lib/mock-ajax.js',
       'test/support/bind-polyfill.js',
       'test/support/es6-promise.min.js',
       'node_modules/lovefield/dist/lovefield.min.js',
