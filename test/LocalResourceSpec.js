@@ -49,7 +49,7 @@ describe('LocalResource', function() {
         .setSchemaBuilder(getSchemaBuilder())
         .setTableName('my_table')
         .setStoreType(lf.schema.DataStoreType.MEMORY)
-        .createTable();
+      cache.createTable();
       var connection = cache.connectToDb();
       cache.persist(connection, {}).then(function(records) {
         var id = records[0].id;

@@ -12,8 +12,8 @@ describe('ResourceCache', function() {
   describe('#createTable', function() {
     describe('when no schemaBuilder property is assigned', function() {
       it('throws an exception', function() {
-        var cache = Object.create(ResourceCache);
-        cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+        var cache = Object.create(ResourceCache)
+          .setStoreType(lf.schema.DataStoreType.MEMORY);
 
         expect(cache.createTable.bind(cache)).toThrow();
       });
@@ -22,9 +22,9 @@ describe('ResourceCache', function() {
     describe('when a schemaBuilder property is assigned', function() {
       describe('when no tableName property is assigned', function() {
         it('throws an exception', function() {
-          var cache = Object.create(ResourceCache);
-          cache.setSchemaBuilder(getSchemaBuilder());
-          cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+          var cache = Object.create(ResourceCache)
+            .setSchemaBuilder(getSchemaBuilder())
+            .setStoreType(lf.schema.DataStoreType.MEMORY);
 
           expect(cache.createTable.bind(cache)).toThrow();
         });
@@ -32,10 +32,10 @@ describe('ResourceCache', function() {
 
       describe('when a tableName property is assigned', function() {
         it('adds an IndexedDB table', function() {
-          var cache = Object.create(ResourceCache);
-          cache.setSchemaBuilder(getSchemaBuilder());
-          cache.setTableName('my_table');
-          cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+          var cache = Object.create(ResourceCache)
+            .setSchemaBuilder(getSchemaBuilder())
+            .setTableName('my_table')
+            .setStoreType(lf.schema.DataStoreType.MEMORY);
 
           expect(cache.createTable.bind(cache)).not.toThrow();
         });
@@ -46,10 +46,10 @@ describe('ResourceCache', function() {
   describe('#markClean', function() {
     describe('when a dirty record exists', function() {
       it('marks it clean', function(done) {
-        var cache = Object.create(ResourceCache);
-        cache.setSchemaBuilder(getSchemaBuilder());
-        cache.setTableName('my_table');
-        cache.setStoreType(lf.schema.DataStoreType.MEMORY);
+        var cache = Object.create(ResourceCache)
+          .setSchemaBuilder(getSchemaBuilder())
+          .setTableName('my_table')
+          .setStoreType(lf.schema.DataStoreType.MEMORY);
         cache.createTable();
         var connection = cache.connectToDb();
         cache.persist(connection, {}).then(function(records) {

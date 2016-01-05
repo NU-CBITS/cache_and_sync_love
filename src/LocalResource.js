@@ -35,12 +35,10 @@
     createTable: function createTable() {
       var isAutoIncrementing = true;
 
-      this.schemaBuilder
+      return this.schemaBuilder
         .createTable(this.tableName)
         .addColumn('id', lf.Type.INTEGER)
         .addPrimaryKey(['id'], isAutoIncrementing);
-
-      return this;
     },
 
     fetchAll: function fetchAll(connection) {

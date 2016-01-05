@@ -6,14 +6,20 @@
 
     setStoreType: function setStoreType(type) {
       this.storeType = type;
+
+      return this;
     },
 
     setSchemaBuilder: function setSchemaBuilder(schemaBuilder) {
       this.schemaBuilder = schemaBuilder;
+
+      return this;
     },
 
     setTableName: function setTableName(name) {
       this.tableName = name;
+
+      return this;
     },
 
     connectToDb: function connectToDb() {
