@@ -4,7 +4,6 @@
   function post(url, data) {
     return new Promise(function(resolve, reject) {
       var request = new XMLHttpRequest();
-      request.responseType = 'json';
 
       request.onload = function onload() {
         if (request.status === 200) {
@@ -29,6 +28,7 @@
       };
 
       request.open('POST', url);
+      request.setRequestHeader('Content-Type', 'application/json');
       request.send(context.JSON.stringify(data));
     });
   }
