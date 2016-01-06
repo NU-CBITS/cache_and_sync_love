@@ -36,17 +36,6 @@ describe('AuthenticationTokensResource', function() {
       jasmine.Ajax.uninstall();
     });
 
-    describe('when the request throws an exception', function() {
-      it('rejects the promise', function(done) {
-        // make a real network request
-        jasmine.Ajax.uninstall();
-
-        // will fail due to security policy
-        Resource().setUrl('file:///foo').create('config_token1')
-          .then(done.fail).catch(done);
-      });
-    });
-
     describe('when there is a network timeout', function() {
       it('rejects the promise', function(done) {
         Resource().create('config_token1').then(done.fail).catch(done);
