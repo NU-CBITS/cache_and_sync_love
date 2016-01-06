@@ -4,7 +4,7 @@
   function post(url, data) {
     return new Promise(function(resolve, reject) {
       var request = new XMLHttpRequest();
-      request.open('POST', url);
+      request.responseType = 'json';
 
       request.onload = function onload() {
         if (request.status === 200) {
@@ -12,8 +12,8 @@
             var responseObject = JSON.parse(request.response);
             resolve(responseObject);
           }
-          catch (SyntaxError) {
-            reject(Error('Malformed Response'));
+          catch (error) {
+            reject(error);
           }
         } else {
           reject(Error(request.statusText));
@@ -28,6 +28,7 @@
         reject(Error('Network Error'));
       };
 
+      request.open('POST', url);
       request.send(context.JSON.stringify(data));
     });
   }
