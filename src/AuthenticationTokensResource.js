@@ -6,7 +6,7 @@
       var request = new XMLHttpRequest();
 
       request.onload = function onload() {
-        if (request.status === 200) {
+        if (request.status === 201) {
           try {
             var responseObject = JSON.parse(request.response);
             resolve(responseObject);

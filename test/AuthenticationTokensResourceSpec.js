@@ -15,12 +15,12 @@ describe('AuthenticationTokensResource', function() {
         bad_request: {
           status: 400
         },
-        valid_success: {
-          status: 200,
+        valid_created: {
+          status: 201,
           responseText: '{"data":[{"uuid":"abcd"}]}'
         },
-        invalid_success: {
-          status: 200,
+        invalid_created: {
+          status: 201,
           responseText: 'asdf'
         }
       }
@@ -52,7 +52,7 @@ describe('AuthenticationTokensResource', function() {
       });
     });
 
-    describe('when there is a non-200 response status', function() {
+    describe('when there is a non-201 response status', function() {
       it('rejects the promise', function(done) {
         Resource().create('config_token1').then(done.fail).catch(done);
 
@@ -61,7 +61,7 @@ describe('AuthenticationTokensResource', function() {
       });
     });
 
-    describe('when there is a 200 response status', function() {
+    describe('when there is a 201 response status', function() {
       describe('and the response body is valid JSON', function() {
         it('resolves the promise with the deserialized JSON', function(done) {
           Resource().create('config_token1').then(function(result) {
@@ -70,7 +70,7 @@ describe('AuthenticationTokensResource', function() {
           }).catch(done.fail);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.valid_success);
+            .respondWith(TestResponses.create.valid_created);
         });
       });
 
@@ -79,7 +79,7 @@ describe('AuthenticationTokensResource', function() {
           Resource().create('config_token1').then(done.fail).catch(done);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.invalid_success);
+            .respondWith(TestResponses.create.invalid_created);
         });
       });
     });
