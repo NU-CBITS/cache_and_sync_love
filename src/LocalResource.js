@@ -28,8 +28,8 @@
       });
     },
 
-    getTable: function getTable(db) {
-      return db.getSchema().table(this.tableName);
+    getTable: function getTable() {
+      return this.schemaBuilder.getSchema().table(this.tableName);
     },
 
     createTable: function createTable() {
@@ -43,13 +43,13 @@
 
     fetchAll: function fetchAll(connection) {
       return connection.then((function(db) {
-        return db.select().from(this.getTable(db)).exec();
+        return db.select().from(this.getTable()).exec();
       }).bind(this));
     },
 
     persist: function persist(connection, record) {
       return connection.then((function(db) {
-        var table = this.getTable(db);
+        var table = this.getTable();
         var row = table.createRow(record);
 
         return db.insert().into(table).values([row]).exec();
