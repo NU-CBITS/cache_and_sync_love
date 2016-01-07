@@ -38,7 +38,8 @@ To build the distribution version, run
 npm run build
 ```
 
-It will create the minified file `dist/cache_and_sync_love.min.js`.
+It will create both the beautified and the minified files
+`dist/cache_and_sync_love[.min].js`.
 
 To publish, once all changes have been committed, run
 
