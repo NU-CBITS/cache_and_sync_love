@@ -65,10 +65,14 @@
             this.tableName = name;
             return this;
         },
-        connectToDb: function connectToDb() {
-            return this.schemaBuilder.connect({
-                storeType: this.storeType
-            });
+        dbConnection: null,
+        getDbConnection: function getDbConnection() {
+            if (this.dbConnection == null) {
+                this.dbConnection = this.schemaBuilder.connect({
+                    storeType: this.storeType
+                });
+            }
+            return this.dbConnection;
         },
         getTable: function getTable() {
             return this.schemaBuilder.getSchema().table(this.tableName);
@@ -77,13 +81,13 @@
             var isAutoIncrementing = true;
             return this.schemaBuilder.createTable(this.tableName).addColumn("id", lf.Type.INTEGER).addPrimaryKey([ "id" ], isAutoIncrementing);
         },
-        fetchAll: function fetchAll(connection) {
-            return connection.then(function(db) {
+        fetchAll: function fetchAll() {
+            return this.getDbConnection().then(function(db) {
                 return db.select().from(this.getTable()).exec();
             }.bind(this));
         },
-        persist: function persist(connection, record) {
-            return connection.then(function(db) {
+        persist: function persist(record) {
+            return this.getDbConnection().then(function(db) {
                 var table = this.getTable();
                 var row = table.createRow(record);
                 return db.insert().into(table).values([ row ]).exec();
@@ -167,10 +171,14 @@
             this.tableName = name;
             return this;
         },
-        connectToDb: function connectToDb() {
-            return this.schemaBuilder.connect({
-                storeType: this.storeType
-            });
+        dbConnection: null,
+        getDbConnection: function getDbConnection() {
+            if (this.dbConnection == null) {
+                this.dbConnection = this.schemaBuilder.connect({
+                    storeType: this.storeType
+                });
+            }
+            return this.dbConnection;
         },
         getTable: function getTable(db) {
             return db.getSchema().table(this.tableName);
@@ -178,31 +186,31 @@
         createTable: function createTable() {
             return this.schemaBuilder.createTable(this.tableName).addColumn("uuid", lf.Type.STRING).addPrimaryKey([ "uuid" ]).addColumn("is_dirty", lf.Type.BOOLEAN).addColumn("created_at", lf.Type.DATE_TIME).addColumn("updated_at", lf.Type.DATE_TIME);
         },
-        markClean: function markClean(connection, recordUuids) {
-            return connection.then(function(db) {
+        markClean: function markClean(recordUuids) {
+            return this.getDbConnection().then(function(db) {
                 var table = this.getTable(db);
                 return db.update(table).set(table.is_dirty, false).where(table.uuid.in(recordUuids)).exec();
             }.bind(this));
         },
-        fetch: function fetch(connection, recordUuid) {
-            return connection.then(function(db) {
+        fetch: function fetch(recordUuid) {
+            return this.getDbConnection().then(function(db) {
                 var table = this.getTable(db);
                 return db.select().from(table).where(table.uuid.eq(recordUuid)).exec();
             }.bind(this));
         },
-        fetchAll: function fetchAll(connection) {
-            return connection.then(function(db) {
+        fetchAll: function fetchAll() {
+            return this.getDbConnection().then(function(db) {
                 return db.select().from(this.getTable(db)).exec();
             }.bind(this));
         },
-        fetchAllDirty: function fetchAllDirty(connection) {
-            return connection.then(function(db) {
+        fetchAllDirty: function fetchAllDirty() {
+            return this.getDbConnection().then(function(db) {
                 var table = this.getTable(db);
                 return db.select().from(table).where(table.is_dirty.eq(true)).exec();
             }.bind(this));
         },
-        persist: function persist(connection, record) {
-            return connection.then(function(db) {
+        persist: function persist(record) {
+            return this.getDbConnection().then(function(db) {
                 var table = this.getTable(db), dirtyRecord = Object.create(record);
                 dirtyRecord.uuid = cbit.uuid();
                 dirtyRecord.created_at = new Date();

@@ -22,10 +22,16 @@
       return this;
     },
 
-    connectToDb: function connectToDb() {
-      return this.schemaBuilder.connect({
-        storeType: this.storeType
-      });
+    dbConnection: null,
+
+    getDbConnection: function getDbConnection() {
+      if (this.dbConnection == null) {
+        this.dbConnection = this.schemaBuilder.connect({
+          storeType: this.storeType
+        });
+      }
+
+      return this.dbConnection;
     },
 
     getTable: function getTable() {
@@ -41,14 +47,14 @@
         .addPrimaryKey(['id'], isAutoIncrementing);
     },
 
-    fetchAll: function fetchAll(connection) {
-      return connection.then((function(db) {
+    fetchAll: function fetchAll() {
+      return this.getDbConnection().then((function(db) {
         return db.select().from(this.getTable()).exec();
       }).bind(this));
     },
 
-    persist: function persist(connection, record) {
-      return connection.then((function(db) {
+    persist: function persist(record) {
+      return this.getDbConnection().then((function(db) {
         var table = this.getTable();
         var row = table.createRow(record);
 

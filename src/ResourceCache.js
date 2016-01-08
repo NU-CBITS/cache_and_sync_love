@@ -22,10 +22,16 @@
       return this;
     },
 
-    connectToDb: function connectToDb() {
-      return this.schemaBuilder.connect({
-        storeType: this.storeType
-      });
+    dbConnection: null,
+
+    getDbConnection: function getDbConnection() {
+      if (this.dbConnection == null) {
+        this.dbConnection = this.schemaBuilder.connect({
+          storeType: this.storeType
+        });
+      }
+
+      return this.dbConnection;
     },
 
     getTable: function getTable(db) {
@@ -42,8 +48,8 @@
         .addColumn('updated_at', lf.Type.DATE_TIME);
     },
 
-    markClean: function markClean(connection, recordUuids) {
-      return connection.then((function(db) {
+    markClean: function markClean(recordUuids) {
+      return this.getDbConnection().then((function(db) {
         var table = this.getTable(db);
 
         return db
@@ -54,30 +60,30 @@
       }).bind(this));
     },
 
-    fetch: function fetch(connection, recordUuid) {
-     return connection.then((function(db) {
+    fetch: function fetch(recordUuid) {
+     return this.getDbConnection().then((function(db) {
        var table = this.getTable(db);
         
        return db.select().from(table).where(table.uuid.eq(recordUuid)).exec();
       }).bind(this));
     },
 
-    fetchAll: function fetchAll(connection) {
-      return connection.then((function(db) {
+    fetchAll: function fetchAll() {
+      return this.getDbConnection().then((function(db) {
         return db.select().from(this.getTable(db)).exec();
       }).bind(this));
     },
 
-    fetchAllDirty: function fetchAllDirty(connection) {
-      return connection.then((function(db) {
+    fetchAllDirty: function fetchAllDirty() {
+      return this.getDbConnection().then((function(db) {
         var table = this.getTable(db);
         
         return db.select().from(table).where(table.is_dirty.eq(true)).exec();
       }).bind(this));
     },
 
-    persist: function persist(connection, record) {
-      return connection.then((function(db) {
+    persist: function persist(record) {
+      return this.getDbConnection().then((function(db) {
         var table = this.getTable(db),
             dirtyRecord = Object.create(record);
         dirtyRecord.uuid = cbit.uuid();

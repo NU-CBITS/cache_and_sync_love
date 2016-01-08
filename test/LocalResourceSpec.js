@@ -50,12 +50,11 @@ describe('LocalResource', function() {
         .setTableName('my_table')
         .setStoreType(lf.schema.DataStoreType.MEMORY)
       cache.createTable();
-      var connection = cache.connectToDb();
-      cache.persist(connection, {}).then(function(records) {
+      cache.persist({}).then(function(records) {
         var id = records[0].id;
-        cache.fetchAll(connection).then(function(records) {
+        cache.fetchAll().then(function(records) {
           if (records[0].id === id) {
-            connection.then(function(db) {
+            cache.getDbConnection().then(function(db) {
               db.close();
               done();
             });
