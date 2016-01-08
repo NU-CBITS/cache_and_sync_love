@@ -8,7 +8,7 @@
       request.onload = function onload() {
         if (request.status === 201) {
           try {
-            var responseObject = JSON.parse(request.response);
+            var responseObject = JSON.parse(request.responseText);
             resolve(responseObject);
           }
           catch (error) {
