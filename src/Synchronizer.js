@@ -44,8 +44,14 @@
     }).bind(this));
   }
 
+  var synchronizerIntervalId = null;
+
   var Synchronizer = {
-    PERIOD_IN_MS: 30 * 1000,
+    period_in_ms: 30 * 1000,
+
+    setPeriod: function setPeriod(period) {
+      this.period_in_ms = period;
+    },
 
     setDbConnection: function setDbConnection(connection) {
       this.connection = connection;
@@ -69,11 +75,27 @@
     },
 
     run: function run() {
+      if (synchronizerIntervalId != null) {
+        return;
+      }
+
       this.synchronize();
-      context.setInterval(this.run.bind(this), this.PERIOD_IN_MS);
+      synchronizerIntervalId = context.setInterval(
+        this.run.bind(this),
+        this.period_in_ms
+      );
+    },
+
+    stop: function stop() {
+      context.clearInterval(synchronizerIntervalId);
+      synchronizerIntervalId = null;
     },
 
     registerCache: function registerCache(cache) {
+      if (this.cacheTypeIndices[cache.name] != null) {
+        return;
+      }
+
       this.cacheTypeIndices[cache.name] = this.caches.length;
       this.caches.push(cache);
     },
