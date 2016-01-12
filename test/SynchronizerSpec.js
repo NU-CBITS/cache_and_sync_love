@@ -3,8 +3,72 @@
 var Synchronizer = cbit.Synchronizer;
 
 describe('Synchronizer', function() {
+  var online = { hasConnection: function() { return true; } };
+
   afterEach(function() {
     Synchronizer.resetCaches();
+  });
+
+  describe('.registerCache', function() {
+    describe('when the cache has not been registered', function() {
+      it('adds the cache to its list', function() {
+        var cache = { name: 'cache1' };
+        Synchronizer.registerCache(cache);
+
+        expect(Synchronizer.caches[Synchronizer.caches.length - 1])
+          .toEqual(cache);
+      });
+    });
+
+    describe('when the cache has already been registered', function() {
+      it('does not add the cache to its list', function() {
+        var cache = { name: 'cache1' };
+        Synchronizer.registerCache(cache);
+        Synchronizer.registerCache(cache);
+
+        expect(Synchronizer.caches.length).toEqual(1);
+      });
+    });
+  });
+
+  describe('.run', function() {
+    describe('when not already running', function() {
+      it('kicks off synchronization', function(done) {
+        var cache = {
+          name: 'mockCache',
+          fetchAllDirty: function() {
+            return Promise.resolve();
+          }
+        };
+        var payload = {
+          persist: function() {
+            return Promise.resolve();
+          },
+          fetch: function() {
+            return Promise.resolve();
+          }
+        };
+        Synchronizer.setNetwork(online);
+        Synchronizer.setPayloadResource(payload);
+        Synchronizer.registerCache(cache);
+        Synchronizer.setDbConnection('mock-db-connection');
+
+        spyOn(cache, 'fetchAllDirty').and.callThrough();
+        spyOn(payload, 'persist').and.callThrough();
+
+        // calling twice intentionally to ensure it only kicks off once
+        Synchronizer.run();
+        Synchronizer.run();
+        setTimeout(function() {
+          expect(cache.fetchAllDirty).toHaveBeenCalled();
+          expect(cache.fetchAllDirty.calls.count()).toEqual(1);
+          expect(payload.persist).toHaveBeenCalled();
+          expect(payload.persist.calls.count()).toEqual(1);
+          Synchronizer.stop();
+          done();
+        }, 1);
+      });
+    });
   });
 
   describe('.synchronize', function() {
@@ -12,22 +76,20 @@ describe('Synchronizer', function() {
       var offline = { hasConnection: function() { return false; } };
 
       it('does not fetch dirty data from the caches to persist', function() {
-        var cache = { name: 'mockCache', fetchAllDirty: function() {} };
+        var cache = { name: 'mockCache', fetchAllDirty: jasmine.createSpy() };
         Synchronizer.setNetwork(offline);
         Synchronizer.registerCache(cache);
 
-        spyOn(cache, 'fetchAllDirty');
         Synchronizer.synchronize();
 
         expect(cache.fetchAllDirty).not.toHaveBeenCalled();
       });
 
       it('does not fetch data from the server', function() {
-        var payload = { fetch: function() {} };
+        var payload = { fetch: jasmine.createSpy() };
         Synchronizer.setNetwork(offline);
         Synchronizer.setPayloadResource(payload);
 
-        spyOn(payload, 'fetch');
         Synchronizer.synchronize();
 
         expect(payload.fetch).not.toHaveBeenCalled();
@@ -35,8 +97,7 @@ describe('Synchronizer', function() {
     });
 
     describe('when there is a network connection', function() {
-      var online = { hasConnection: function() { return true; } },
-          dataPersisted = null,
+      var dataPersisted = null,
           fetchedPayload = { data: [] },
           datum = { uuid: 'uuid1', foo: 'bar', type: 'mockCache' };
       var payload = {
@@ -63,7 +124,7 @@ describe('Synchronizer', function() {
                 resolve([datum]);
               });
             },
-            markClean: function() {}
+            markClean: jasmine.createSpy()
           };
           Synchronizer.setNetwork(online);
           Synchronizer.setPayloadResource(payload);
@@ -71,7 +132,6 @@ describe('Synchronizer', function() {
           Synchronizer.setDbConnection('mock-db-connection');
 
           spyOn(payload, 'persist').and.callThrough();
-          spyOn(cache, 'markClean');
           Synchronizer.synchronize().then(function() {
             expect(dataPersisted[0][0]).toEqual(datum);
             expect(cache.markClean).toHaveBeenCalledWith('mock-db-connection', [datum.uuid]);
