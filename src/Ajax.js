@@ -2,7 +2,7 @@
   'use strict';
 
   var Ajax = {
-    post: function post(url, data) {
+    post: function post(url, headers, data) {
       return new Promise(function(resolve, reject) {
         var request = new XMLHttpRequest();
 
@@ -30,11 +30,14 @@
 
         request.open('POST', url);
         request.setRequestHeader('Content-Type', 'application/json');
+        for (var header in headers) {
+          request.setRequestHeader(header, headers[header]);
+        }
         request.send(context.JSON.stringify(data));
       });
     },
 
-    get: function get(url) {
+    get: function get(url, headers) {
       return new Promise(function(resolve, reject) {
         var request = new XMLHttpRequest();
 
@@ -62,6 +65,9 @@
 
         request.open('GET', url);
         request.setRequestHeader('Content-Type', 'application/json');
+        for (var header in headers) {
+          request.setRequestHeader(header, headers[header]);
+        }
         request.send();
       });
     }

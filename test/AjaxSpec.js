@@ -4,7 +4,7 @@ describe('Ajax', function() {
   var url = 'https://api.example.com';
 
   var TestResponses = {
-    create: {
+    post: {
       bad_request: {
         status: 400
       },
@@ -15,6 +15,11 @@ describe('Ajax', function() {
       invalid_created: {
         status: 201,
         responseText: 'asdf'
+      }
+    },
+    get: {
+      bad_request: {
+        status: 400
       },
       valid_fetched: {
         status: 200,
@@ -59,7 +64,7 @@ describe('Ajax', function() {
         cbit.Ajax.post(url).then(done.fail).catch(done);
 
         jasmine.Ajax.requests.mostRecent()
-          .respondWith(TestResponses.create.bad_request);
+          .respondWith(TestResponses.post.bad_request);
       });
     });
 
@@ -72,7 +77,7 @@ describe('Ajax', function() {
           }).catch(done.fail);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.valid_created);
+            .respondWith(TestResponses.post.valid_created);
         });
       });
 
@@ -81,9 +86,27 @@ describe('Ajax', function() {
           cbit.Ajax.post(url).then(done.fail).catch(done);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.invalid_created);
+            .respondWith(TestResponses.post.invalid_created);
         });
       });
+    });
+
+    it('sets the provided headers', function(done) {
+      cbit.Ajax.post(url, { 'fancyHeader': 'fancy-header-value' }).then(done);
+      var request = jasmine.Ajax.requests.mostRecent();
+      
+      request.respondWith(TestResponses.post.valid_created);
+
+      expect(request.requestHeaders.fancyHeader).toEqual('fancy-header-value');
+    });
+
+    it('transmits the provided data', function(done) {
+      cbit.Ajax.post(url, {}, { foo: 'bar' }).then(done);
+      var request = jasmine.Ajax.requests.mostRecent();
+      
+      request.respondWith(TestResponses.post.valid_created);
+
+      expect(request.data()).toEqual({ foo: 'bar' });
     });
   });
 
@@ -109,7 +132,7 @@ describe('Ajax', function() {
         cbit.Ajax.get(url).then(done.fail).catch(done);
 
         jasmine.Ajax.requests.mostRecent()
-          .respondWith(TestResponses.create.bad_request);
+          .respondWith(TestResponses.get.bad_request);
       });
     });
 
@@ -122,7 +145,7 @@ describe('Ajax', function() {
           }).catch(done.fail);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.valid_fetched);
+            .respondWith(TestResponses.get.valid_fetched);
         });
       });
 
@@ -131,9 +154,18 @@ describe('Ajax', function() {
           cbit.Ajax.get(url).then(done.fail).catch(done);
 
           jasmine.Ajax.requests.mostRecent()
-            .respondWith(TestResponses.create.invalid_fetched);
+            .respondWith(TestResponses.get.invalid_fetched);
         });
       });
+    });
+
+    it('sets the provided headers', function(done) {
+      cbit.Ajax.get(url, { 'fancyHeader': 'fancy-header-value' }).then(done);
+      var request = jasmine.Ajax.requests.mostRecent();
+      
+      request.respondWith(TestResponses.get.valid_fetched);
+
+      expect(request.requestHeaders.fancyHeader).toEqual('fancy-header-value');
     });
   });
 });
