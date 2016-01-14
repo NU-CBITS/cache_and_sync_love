@@ -15,17 +15,15 @@
     }));
   }
 
-  function persistData(dirtyData) {
-    return this.payload.persist(dirtyData);
-  }
-
   function collectDirtyData(cache) {
     return cache.fetchAllDirty(this.connection);
   }
 
-  function persistDirtyData() {
+  function persistDirtyData(payload) {
     return Promise.all(this.caches.map(collectDirtyData.bind(this)))
-      .then(persistData.bind(this))
+      .then(function(dirtyData) {
+        return payload.setData(dirtyData).persist();
+      })
       .then(markCacheRecordsClean.bind(this));
   }
 
@@ -38,8 +36,8 @@
     }
   }
 
-  function fetchData() {
-    return this.payload.fetch().then((function(response) {
+  function fetchData(payload) {
+    return payload.fetch().then((function(response) {
       response.data.forEach(persistClean.bind(this));
     }).bind(this));
   }
@@ -51,26 +49,35 @@
 
     setPeriod: function setPeriod(period) {
       this.period_in_ms = period;
+
+      return this;
     },
 
     setDbConnection: function setDbConnection(connection) {
       this.connection = connection;
+
+      return this;
     },
 
     setNetwork: function setNetwork(network) {
       this.network = network;
+
+      return this;
     },
 
-    setPayloadResource: function setPayloadResource(payload) {
-      this.payload = payload;
+    setPayloadResource: function setPayloadResource(Payload) {
+      this.Payload = Payload;
     },
 
     synchronize: function synchronize() {
       if (!this.network.hasConnection()) { return; }
 
+      var persistPayload = Object.create(this.Payload),
+          fetchPayload = Object.create(this.Payload);
+
       return Promise.all([
-        persistDirtyData.bind(this)(),
-        fetchData.bind(this)()
+        persistDirtyData.bind(this)(persistPayload),
+        fetchData.bind(this)(fetchPayload)
       ]);
     },
 

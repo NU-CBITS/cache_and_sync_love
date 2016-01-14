@@ -83,6 +83,18 @@
           ',method="' + this.httpMethod + '"' +
           ',signature="' + this.signature() + '"'
       };
+    },
+
+    persist: function persist() {
+      this.setMethod('POST');
+
+      return cbit.Ajax.post(this.url, this.toHeader(), this.data);
+    },
+
+    fetch: function fetch() {
+      this.setMethod('GET');
+
+      return cbit.Ajax.get(this.url, this.toHeader());
     }
   };
 

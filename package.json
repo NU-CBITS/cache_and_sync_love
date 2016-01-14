@@ -28,6 +28,6 @@
   "scripts": {
     "test": "node_modules/.bin/eslint src test && node_modules/karma/bin/karma start",
     "test:ci": "node_modules/.bin/eslint src test && node_modules/karma/bin/karma start karma-ci.conf.js",
-    "build": "rm -rf dist && mkdir dist && node_modules/.bin/uglifyjs src/*.js vendor/md5.min.js -o dist/cache_and_sync_love.min.js && node_modules/.bin/uglifyjs src/*.js vendor/md5.min.js -b -o dist/cache_and_sync_love.js"
+    "build": "rm -rf dist && mkdir dist && node_modules/.bin/uglifyjs src/*.js vendor/md5.min.js -m -c -o dist/cache_and_sync_love.min.js && node_modules/.bin/uglifyjs src/*.js vendor/md5.min.js -b -o dist/cache_and_sync_love.js"
   }
 }

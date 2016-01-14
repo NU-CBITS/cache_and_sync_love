@@ -40,8 +40,13 @@ describe('Synchronizer', function() {
             return Promise.resolve();
           }
         };
+        var persistSpy = jasmine.createSpy('persist');
         var payload = {
+          setData: function() {
+            return this;
+          },
           persist: function() {
+            persistSpy();
             return Promise.resolve();
           },
           fetch: function() {
@@ -54,7 +59,6 @@ describe('Synchronizer', function() {
         Synchronizer.setDbConnection('mock-db-connection');
 
         spyOn(cache, 'fetchAllDirty').and.callThrough();
-        spyOn(payload, 'persist').and.callThrough();
 
         // calling twice intentionally to ensure it only kicks off once
         Synchronizer.run();
@@ -62,8 +66,8 @@ describe('Synchronizer', function() {
         setTimeout(function() {
           expect(cache.fetchAllDirty).toHaveBeenCalled();
           expect(cache.fetchAllDirty.calls.count()).toEqual(1);
-          expect(payload.persist).toHaveBeenCalled();
-          expect(payload.persist.calls.count()).toEqual(1);
+          expect(persistSpy).toHaveBeenCalled();
+          expect(persistSpy.calls.count()).toEqual(1);
           Synchronizer.stop();
           done();
         }, 1);
@@ -101,9 +105,11 @@ describe('Synchronizer', function() {
           fetchedPayload = { data: [] },
           datum = { uuid: 'uuid1', foo: 'bar', type: 'mockCache' };
       var payload = {
-        persist: function(data) {
+        setData: function(data) {
           dataPersisted = data;
-
+          return this;
+        },
+        persist: function() {
           return new Promise(function(resolve) {
             resolve({ data: [datum] });
           });
@@ -131,7 +137,6 @@ describe('Synchronizer', function() {
           Synchronizer.registerCache(cache);
           Synchronizer.setDbConnection('mock-db-connection');
 
-          spyOn(payload, 'persist').and.callThrough();
           Synchronizer.synchronize().then(function() {
             expect(dataPersisted[0][0]).toEqual(datum);
             expect(cache.markClean).toHaveBeenCalledWith('mock-db-connection', [datum.uuid]);
