@@ -12,6 +12,7 @@ describe('AuthenticationTokensResource', function() {
 
       expect(cbit.Ajax.post).toHaveBeenCalledWith(
         'https://api.example.com',
+        {},
         {
           configurationToken: 'config_token1',
           data: {

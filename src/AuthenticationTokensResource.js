@@ -15,7 +15,7 @@
     },
 
     create: function create(configurationToken) {
-      return cbit.Ajax.post(this.url, {
+      return cbit.Ajax.post(this.url, {}, {
         configurationToken: configurationToken,
         data: {
           type: 'authenticationTokens',
