@@ -1,31 +1,71 @@
 (function(context) {
     "use strict";
-    function post(url, data) {
-        return new Promise(function(resolve, reject) {
-            var request = new XMLHttpRequest();
-            request.onload = function onload() {
-                if (request.status === 201) {
-                    try {
-                        var responseObject = JSON.parse(request.responseText);
-                        resolve(responseObject);
-                    } catch (error) {
-                        reject(error);
+    var Ajax = {
+        post: function post(url, headers, data) {
+            return new Promise(function(resolve, reject) {
+                var request = new XMLHttpRequest();
+                request.onload = function onload() {
+                    if (request.status === 201) {
+                        try {
+                            var responseObject = JSON.parse(request.responseText);
+                            resolve(responseObject);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    } else {
+                        reject(Error(request.statusText));
                     }
-                } else {
-                    reject(Error(request.statusText));
+                };
+                request.onerror = function onerror() {
+                    reject(Error("Network Error"));
+                };
+                request.ontimeout = function ontimeout() {
+                    reject(Error("Network Error"));
+                };
+                request.open("POST", url);
+                request.setRequestHeader("Content-Type", "application/json");
+                for (var header in headers) {
+                    request.setRequestHeader(header, headers[header]);
                 }
-            };
-            request.onerror = function onerror() {
-                reject(Error("Network Error"));
-            };
-            request.ontimeout = function ontimeout() {
-                reject(Error("Network Error"));
-            };
-            request.open("POST", url);
-            request.setRequestHeader("Content-Type", "application/json");
-            request.send(context.JSON.stringify(data));
-        });
-    }
+                request.send(context.JSON.stringify(data));
+            });
+        },
+        get: function get(url, headers) {
+            return new Promise(function(resolve, reject) {
+                var request = new XMLHttpRequest();
+                request.onload = function onload() {
+                    if (request.status === 200) {
+                        try {
+                            var responseObject = JSON.parse(request.responseText);
+                            resolve(responseObject);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    } else {
+                        reject(Error(request.statusText));
+                    }
+                };
+                request.onerror = function onerror() {
+                    reject(Error("Network Error"));
+                };
+                request.ontimeout = function ontimeout() {
+                    reject(Error("Network Error"));
+                };
+                request.open("GET", url);
+                request.setRequestHeader("Content-Type", "application/json");
+                for (var header in headers) {
+                    request.setRequestHeader(header, headers[header]);
+                }
+                request.send();
+            });
+        }
+    };
+    context.cbit = context.cbit || {};
+    context.cbit.Ajax = Ajax;
+})(this);
+
+(function(context) {
+    "use strict";
     var AuthenticationTokensResource = {
         setUrl: function setUrl(url) {
             this.url = url;
@@ -36,7 +76,7 @@
             return this;
         },
         create: function create(configurationToken) {
-            return post(this.url, {
+            return cbit.Ajax.post(this.url, {}, {
                 configurationToken: configurationToken,
                 data: {
                     type: "authenticationTokens",
@@ -149,6 +189,16 @@
             return {
                 Authorization: 'key="' + this.key + '"' + ",nonce=" + this.getNonce() + ",timestamp=" + this.getTimestamp() + ',url="' + this.url + '"' + ',method="' + this.httpMethod + '"' + ',signature="' + this.signature() + '"'
             };
+        },
+        persist: function persist() {
+            this.setMethod("POST");
+            return cbit.Ajax.post(this.url, this.toHeader(), {
+                data: this.data
+            });
+        },
+        fetch: function fetch() {
+            this.setMethod("GET");
+            return cbit.Ajax.get(this.url, this.toHeader());
         }
     };
     context.cbit = context.cbit || {};
@@ -240,14 +290,17 @@
             return d.uuid;
         }));
     }
-    function persistData(dirtyData) {
-        return this.payload.persist(dirtyData);
-    }
     function collectDirtyData(cache) {
         return cache.fetchAllDirty(this.connection);
     }
-    function persistDirtyData() {
-        return Promise.all(this.caches.map(collectDirtyData.bind(this))).then(persistData.bind(this)).then(markCacheRecordsClean.bind(this));
+    function persistDirtyData(payload) {
+        return Promise.all(this.caches.map(collectDirtyData.bind(this))).then(function(dirtyData) {
+            var flatData = [];
+            dirtyData.forEach(function(d) {
+                flatData = flatData.concat(d);
+            });
+            return payload.setData(flatData).persist();
+        }).then(markCacheRecordsClean.bind(this));
     }
     function persistClean(datum) {
         var cache = Synchronizer.getCache(datum.type);
@@ -256,33 +309,51 @@
             cache.markClean(this.connection, datum.uuid);
         }
     }
-    function fetchData() {
-        return this.payload.fetch().then(function(response) {
+    function fetchData(payload) {
+        return payload.fetch().then(function(response) {
             response.data.forEach(persistClean.bind(this));
         }.bind(this));
     }
+    var synchronizerIntervalId = null;
     var Synchronizer = {
-        PERIOD_IN_MS: 30 * 1e3,
+        period_in_ms: 30 * 1e3,
+        setPeriod: function setPeriod(period) {
+            this.period_in_ms = period;
+            return this;
+        },
         setDbConnection: function setDbConnection(connection) {
             this.connection = connection;
+            return this;
         },
         setNetwork: function setNetwork(network) {
             this.network = network;
+            return this;
         },
-        setPayloadResource: function setPayloadResource(payload) {
-            this.payload = payload;
+        setPayloadResource: function setPayloadResource(Payload) {
+            this.Payload = Payload;
         },
         synchronize: function synchronize() {
             if (!this.network.hasConnection()) {
                 return;
             }
-            return Promise.all([ persistDirtyData.bind(this)(), fetchData.bind(this)() ]);
+            var persistPayload = Object.create(this.Payload), fetchPayload = Object.create(this.Payload);
+            return Promise.all([ persistDirtyData.bind(this)(persistPayload), fetchData.bind(this)(fetchPayload) ]);
         },
         run: function run() {
+            if (synchronizerIntervalId != null) {
+                return;
+            }
             this.synchronize();
-            context.setInterval(this.run.bind(this), this.PERIOD_IN_MS);
+            synchronizerIntervalId = context.setInterval(this.run.bind(this), this.period_in_ms);
+        },
+        stop: function stop() {
+            context.clearInterval(synchronizerIntervalId);
+            synchronizerIntervalId = null;
         },
         registerCache: function registerCache(cache) {
+            if (this.cacheTypeIndices[cache.name] != null) {
+                return;
+            }
             this.cacheTypeIndices[cache.name] = this.caches.length;
             this.caches.push(cache);
         },
