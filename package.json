@@ -1,6 +1,6 @@
 {
   "name": "cache_and_sync_love",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "author": "Eric Carty-Fickes <ericcf@northwestern.edu>",
   "description": "A library for use with caching and synchronizing client side data with a server.",
   "licence": "MIT",
