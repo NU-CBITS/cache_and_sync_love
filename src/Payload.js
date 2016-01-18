@@ -88,7 +88,9 @@
     persist: function persist() {
       this.setMethod('POST');
 
-      return cbit.Ajax.post(this.url, this.toHeader(), this.data);
+      return cbit.Ajax.post(this.url, this.toHeader(), {
+        data: this.data
+      });
     },
 
     fetch: function fetch() {

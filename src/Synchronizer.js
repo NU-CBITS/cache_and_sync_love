@@ -22,7 +22,12 @@
   function persistDirtyData(payload) {
     return Promise.all(this.caches.map(collectDirtyData.bind(this)))
       .then(function(dirtyData) {
-        return payload.setData(dirtyData).persist();
+        var flatData = [];
+        dirtyData.forEach(function(d) {
+          flatData = flatData.concat(d);
+        });
+
+        return payload.setData(flatData).persist();
       })
       .then(markCacheRecordsClean.bind(this));
   }
