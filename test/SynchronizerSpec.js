@@ -138,7 +138,7 @@ describe('Synchronizer', function() {
           Synchronizer.setDbConnection('mock-db-connection');
 
           Synchronizer.synchronize().then(function() {
-            expect(dataPersisted[0][0]).toEqual(datum);
+            expect(dataPersisted[0]).toEqual(datum);
             expect(cache.markClean).toHaveBeenCalledWith('mock-db-connection', [datum.uuid]);
             done();
           }).catch(done.fail);
