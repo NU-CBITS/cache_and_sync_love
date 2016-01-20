@@ -16,7 +16,13 @@
   }
 
   function collectDirtyData(cache) {
-    return cache.fetchAllDirty(this.connection);
+    return cache.fetchAllDirty(this.connection).then(function(dirtyRecords) {
+      return dirtyRecords.map(function(dirtyRecord) {
+        dirtyRecord.type = cache.tableName;
+
+        return dirtyRecord;
+      });
+    });
   }
 
   function persistDirtyData(payload) {
@@ -104,11 +110,11 @@
     },
 
     registerCache: function registerCache(cache) {
-      if (this.cacheTypeIndices[cache.name] != null) {
+      if (this.cacheTypeIndices[cache.tableName] != null) {
         return;
       }
 
-      this.cacheTypeIndices[cache.name] = this.caches.length;
+      this.cacheTypeIndices[cache.tableName] = this.caches.length;
       this.caches.push(cache);
     },
 

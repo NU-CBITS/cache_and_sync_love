@@ -12,7 +12,7 @@ describe('Synchronizer', function() {
   describe('.registerCache', function() {
     describe('when the cache has not been registered', function() {
       it('adds the cache to its list', function() {
-        var cache = { name: 'cache1' };
+        var cache = { tableName: 'cache1' };
         Synchronizer.registerCache(cache);
 
         expect(Synchronizer.caches[Synchronizer.caches.length - 1])
@@ -22,7 +22,7 @@ describe('Synchronizer', function() {
 
     describe('when the cache has already been registered', function() {
       it('does not add the cache to its list', function() {
-        var cache = { name: 'cache1' };
+        var cache = { tableName: 'cache1' };
         Synchronizer.registerCache(cache);
         Synchronizer.registerCache(cache);
 
@@ -35,9 +35,9 @@ describe('Synchronizer', function() {
     describe('when not already running', function() {
       it('kicks off synchronization', function(done) {
         var cache = {
-          name: 'mockCache',
+          tableName: 'mock_data',
           fetchAllDirty: function() {
-            return Promise.resolve();
+            return Promise.resolve([]);
           }
         };
         var persistSpy = jasmine.createSpy('persist');
@@ -80,7 +80,7 @@ describe('Synchronizer', function() {
       var offline = { hasConnection: function() { return false; } };
 
       it('does not fetch dirty data from the caches to persist', function() {
-        var cache = { name: 'mockCache', fetchAllDirty: jasmine.createSpy() };
+        var cache = { tableName: 'mockCache', fetchAllDirty: jasmine.createSpy() };
         Synchronizer.setNetwork(offline);
         Synchronizer.registerCache(cache);
 
@@ -103,7 +103,7 @@ describe('Synchronizer', function() {
     describe('when there is a network connection', function() {
       var dataPersisted = null,
           fetchedPayload = { data: [] },
-          datum = { uuid: 'uuid1', foo: 'bar', type: 'mockCache' };
+          datum = { uuid: 'uuid1', foo: 'bar' };
       var payload = {
         setData: function(data) {
           dataPersisted = data;
@@ -124,7 +124,7 @@ describe('Synchronizer', function() {
       describe('and it successfully persists dirty data to the server', function() {
         it('marks the data clean in the cache', function(done) {
           var cache = {
-            name: 'mockCache',
+            tableName: 'mock_data',
             fetchAllDirty: function() {
               return new Promise(function(resolve) {
                 resolve([datum]);
@@ -149,7 +149,7 @@ describe('Synchronizer', function() {
         describe('and the data type corresponds to a registered cache', function() {
           it('persists the data to the cache', function(done) {
             var cache = {
-              name: 'mockCache',
+              tableName: 'mock_data',
               fetchAllDirty: function() {
                 return new Promise(function(resolve) {
                   resolve([]);
