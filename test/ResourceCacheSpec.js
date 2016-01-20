@@ -88,19 +88,38 @@ describe('ResourceCache', function() {
   });
 
   describe('#fetchAllDirty', function() {
-    it('returns all dirty records in the table', function(done) {
+    function getCache() {
       var cache = Object.create(ResourceCache);
       cache.setSchemaBuilder(getSchemaBuilder());
       cache.setTableName('my_table');
       cache.setStoreType(lf.schema.DataStoreType.MEMORY);
       cache.createTable();
+
+      return cache;
+    }
+
+    it('returns all dirty records in the table', function(done) {
+      var cache = getCache();
       cache.persist({}).then(function(records) {
         var uuid = records[0].uuid;
         cache.fetchAllDirty().then(function(records) {
-          if (records[0].uuid === uuid) {
+          if (records.length === 1 && records[0].uuid === uuid) {
             done();
           } else {
             done.fail('record should be returned');
+          }
+        });
+      });
+    });
+
+    it('does not select the "is_dirty" column', function(done) {
+      var cache = getCache();
+      cache.persist({}).then(function() {
+        cache.fetchAllDirty().then(function(records) {
+          if (records.length === 1 && records[0].is_dirty == undefined) {
+            done();
+          } else {
+            done.fail('should not select "is_dirty" column');
           }
         });
       });
