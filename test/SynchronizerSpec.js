@@ -59,8 +59,6 @@ describe('Synchronizer', function() {
 
         spyOn(cache, 'fetchAllDirty').and.callThrough();
 
-        // calling twice intentionally to ensure it only kicks off once
-        Synchronizer.run();
         Synchronizer.run();
         setTimeout(function() {
           expect(cache.fetchAllDirty).toHaveBeenCalled();

@@ -56,7 +56,7 @@
     }).bind(this));
   }
 
-  var synchronizerIntervalId = null;
+  var synchronizerTimeoutId = null;
 
   var Synchronizer = {
     period_in_ms: 30 * 1000,
@@ -94,20 +94,18 @@
     },
 
     run: function run() {
-      if (synchronizerIntervalId != null) {
-        return;
-      }
-
-      this.synchronize();
-      synchronizerIntervalId = context.setInterval(
-        this.run.bind(this),
-        this.period_in_ms
-      );
+      this.stop();
+      this.synchronize().then((function() {
+        synchronizerTimeoutId = context.setTimeout(
+          this.run.bind(this),
+          this.period_in_ms
+        );
+      }).bind(this));
     },
 
     stop: function stop() {
-      context.clearInterval(synchronizerIntervalId);
-      synchronizerIntervalId = null;
+      context.clearTimeout(synchronizerTimeoutId);
+      synchronizerTimeoutId = null;
     },
 
     registerCache: function registerCache(cache) {
