@@ -10,13 +10,13 @@
 
     if (!cache) { return; }
 
-    cache.markClean(this.connection, response.data.map(function(d) {
-      return d.uuid;
+    cache.markClean(response.data.map(function(d) {
+      return d.id;
     }));
   }
 
   function collectDirtyData(cache) {
-    return cache.fetchAllDirty(this.connection).then(function(dirtyRecords) {
+    return cache.fetchAllDirty().then(function(dirtyRecords) {
       return dirtyRecords.map(function(dirtyRecord) {
         dirtyRecord.type = cache.tableName;
 
@@ -42,8 +42,8 @@
     var cache = Synchronizer.getCache(datum.type);
 
     if (cache) {
-      cache.persist(this.connection, datum);
-      cache.markClean(this.connection, datum.uuid);
+      cache.persist(datum);
+      cache.markClean([datum.id]);
     }
   }
 
@@ -60,12 +60,6 @@
 
     setPeriod: function setPeriod(period) {
       this.period_in_ms = period;
-
-      return this;
-    },
-
-    setDbConnection: function setDbConnection(connection) {
-      this.connection = connection;
 
       return this;
     },

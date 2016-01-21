@@ -56,7 +56,6 @@ describe('Synchronizer', function() {
         Synchronizer.setNetwork(online);
         Synchronizer.setPayloadResource(payload);
         Synchronizer.registerCache(cache);
-        Synchronizer.setDbConnection('mock-db-connection');
 
         spyOn(cache, 'fetchAllDirty').and.callThrough();
 
@@ -103,7 +102,7 @@ describe('Synchronizer', function() {
     describe('when there is a network connection', function() {
       var dataPersisted = null,
           fetchedPayload = { data: [] },
-          datum = { uuid: 'uuid1', foo: 'bar' };
+          datum = { id: 'uuid1', foo: 'bar' };
       var payload = {
         setData: function(data) {
           dataPersisted = data;
@@ -135,11 +134,10 @@ describe('Synchronizer', function() {
           Synchronizer.setNetwork(online);
           Synchronizer.setPayloadResource(payload);
           Synchronizer.registerCache(cache);
-          Synchronizer.setDbConnection('mock-db-connection');
 
           Synchronizer.synchronize().then(function() {
             expect(dataPersisted[0]).toEqual(datum);
-            expect(cache.markClean).toHaveBeenCalledWith('mock-db-connection', [datum.uuid]);
+            expect(cache.markClean).toHaveBeenCalledWith([datum.id]);
             done();
           }).catch(done.fail);
         });
