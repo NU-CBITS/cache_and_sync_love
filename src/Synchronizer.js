@@ -86,7 +86,11 @@
       return Promise.all([
         transmitDirtyData.bind(this)(persistPayload),
         fetchData.bind(this)(fetchPayload)
-      ]);
+      ]).catch((function(result) {
+        if (this.errorCache != null) {
+          this.errorCache.persist({ value: result });
+        }
+      }).bind(this));
     },
 
     run: function run() {
@@ -113,6 +117,12 @@
 
       this.cacheTypeIndices[cache.tableName] = this.caches.length;
       this.caches.push(cache);
+    },
+
+    registerErrorCache: function registerErrorCache(cache) {
+      this.errorCache = cache;
+
+      return this;
     },
 
     getCache: function getCache(type) {

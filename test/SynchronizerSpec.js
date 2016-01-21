@@ -99,6 +99,47 @@ describe('Synchronizer', function() {
       });
     });
 
+    describe('when an error occurs during transmission', function() {
+      it('saves it to the error cache', function(done) {
+        var payload = {
+          setData: function() {
+            return this;
+          },
+          persist: function() {
+            return new Promise(function(resolve, reject) {
+              reject('asdf');
+            });
+          },
+          fetch: function() {
+            return new Promise(function(resolve) {
+              resolve({ data: [] });
+            });
+          }
+        };
+        var cache = {
+          tableName: 'mock_data',
+          fetchAllDirty: function() {
+            return new Promise(function(resolve) {
+              resolve([{ id: '1' }]);
+            });
+          }
+        };
+        var errorCache = {
+          tableName: 'mock_errors',
+          persist: jasmine.createSpy()
+        };
+        Synchronizer.setNetwork(online);
+        Synchronizer.setPayloadResource(payload);
+        Synchronizer.registerCache(cache);
+        Synchronizer.registerErrorCache(errorCache);
+
+        Synchronizer.synchronize().then(function() {
+          expect(errorCache.persist).toHaveBeenCalledWith({ value: 'asdf' });
+          done();
+        }).catch(done.fail);
+      });
+    });
+
     describe('when there is a network connection', function() {
       var dataPersisted = null,
           fetchedPayload = { data: [] },
