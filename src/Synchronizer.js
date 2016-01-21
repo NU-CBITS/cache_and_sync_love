@@ -25,15 +25,18 @@
     });
   }
 
-  function persistDirtyData(payload) {
+  function transmitDirtyData(payload) {
     return Promise.all(this.caches.map(collectDirtyData.bind(this)))
       .then(function(dirtyData) {
-        var flatData = [];
-        dirtyData.forEach(function(d) {
-          flatData = flatData.concat(d);
-        });
+        if (dirtyData.some(function(d) { return d.length > 0; })) {
+          var flatData = dirtyData.reduce(function(a, b) {
+            return a.concat(b);
+          }, []);
 
-        return payload.setData(flatData).persist();
+          return payload.setData(flatData).persist();
+        }
+
+        return { data: [] };
       })
       .then(markCacheRecordsClean.bind(this));
   }
@@ -81,7 +84,7 @@
           fetchPayload = Object.create(this.Payload);
 
       return Promise.all([
-        persistDirtyData.bind(this)(persistPayload),
+        transmitDirtyData.bind(this)(persistPayload),
         fetchData.bind(this)(fetchPayload)
       ]);
     },

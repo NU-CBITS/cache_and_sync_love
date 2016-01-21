@@ -37,7 +37,7 @@ describe('Synchronizer', function() {
         var cache = {
           tableName: 'mock_data',
           fetchAllDirty: function() {
-            return Promise.resolve([]);
+            return Promise.resolve([{ id: '1' }]);
           }
         };
         var persistSpy = jasmine.createSpy('persist');
@@ -119,6 +119,29 @@ describe('Synchronizer', function() {
           });
         }
       };
+
+      describe('when there are no dirty records', function() {
+        it('does not transmit', function(done) {
+          var cache = {
+            tableName: 'mock_data',
+            fetchAllDirty: function() {
+              return new Promise(function(resolve) {
+                resolve([]);
+              });
+            },
+            markClean: jasmine.createSpy()
+          };
+          Synchronizer.setNetwork(online);
+          Synchronizer.setPayloadResource(payload);
+          Synchronizer.registerCache(cache);
+
+          Synchronizer.synchronize().then(function() {
+            expect(dataPersisted).toBeNull();
+            expect(cache.markClean).not.toHaveBeenCalled();
+            done();
+          }).catch(done.fail);
+        });
+      });
 
       describe('and it successfully persists dirty data to the server', function() {
         it('marks the data clean in the cache', function(done) {
