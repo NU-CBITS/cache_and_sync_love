@@ -78,7 +78,14 @@
       return this.getDbConnection().then((function(db) {
         var table = this.getTable(db);
         
-        return db.select().from(table).where(table.is_dirty.eq(true)).exec();
+        return db.select().from(table).where(table.is_dirty.eq(true)).exec()
+                 .then(function(dirtyRecords) {
+                   return dirtyRecords.map(function(dirtyRecord) {
+                     delete dirtyRecord.is_dirty;
+
+                     return dirtyRecord;
+                    });
+                 });
       }).bind(this));
     },
 

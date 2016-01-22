@@ -10,24 +10,33 @@
 
     if (!cache) { return; }
 
-    cache.markClean(this.connection, response.data.map(function(d) {
-      return d.uuid;
+    cache.markClean(response.data.map(function(d) {
+      return d.id;
     }));
   }
 
   function collectDirtyData(cache) {
-    return cache.fetchAllDirty(this.connection);
+    return cache.fetchAllDirty().then(function(dirtyRecords) {
+      return dirtyRecords.map(function(dirtyRecord) {
+        dirtyRecord.type = cache.tableName;
+
+        return dirtyRecord;
+      });
+    });
   }
 
-  function persistDirtyData(payload) {
+  function transmitDirtyData(payload) {
     return Promise.all(this.caches.map(collectDirtyData.bind(this)))
       .then(function(dirtyData) {
-        var flatData = [];
-        dirtyData.forEach(function(d) {
-          flatData = flatData.concat(d);
-        });
+        if (dirtyData.some(function(d) { return d.length > 0; })) {
+          var flatData = dirtyData.reduce(function(a, b) {
+            return a.concat(b);
+          }, []);
 
-        return payload.setData(flatData).persist();
+          return payload.setData(flatData).persist();
+        }
+
+        return { data: [] };
       })
       .then(markCacheRecordsClean.bind(this));
   }
@@ -36,8 +45,8 @@
     var cache = Synchronizer.getCache(datum.type);
 
     if (cache) {
-      cache.persist(this.connection, datum);
-      cache.markClean(this.connection, datum.uuid);
+      cache.persist(datum);
+      cache.markClean([datum.id]);
     }
   }
 
@@ -47,19 +56,13 @@
     }).bind(this));
   }
 
-  var synchronizerIntervalId = null;
+  var synchronizerTimeoutId = null;
 
   var Synchronizer = {
     period_in_ms: 30 * 1000,
 
     setPeriod: function setPeriod(period) {
       this.period_in_ms = period;
-
-      return this;
-    },
-
-    setDbConnection: function setDbConnection(connection) {
-      this.connection = connection;
 
       return this;
     },
@@ -81,35 +84,43 @@
           fetchPayload = Object.create(this.Payload);
 
       return Promise.all([
-        persistDirtyData.bind(this)(persistPayload),
+        transmitDirtyData.bind(this)(persistPayload),
         fetchData.bind(this)(fetchPayload)
-      ]);
+      ]).catch((function(result) {
+        if (this.errorCache != null) {
+          this.errorCache.persist({ value: result });
+        }
+      }).bind(this));
     },
 
     run: function run() {
-      if (synchronizerIntervalId != null) {
-        return;
-      }
-
-      this.synchronize();
-      synchronizerIntervalId = context.setInterval(
-        this.run.bind(this),
-        this.period_in_ms
-      );
+      this.stop();
+      this.synchronize().then((function() {
+        synchronizerTimeoutId = context.setTimeout(
+          this.run.bind(this),
+          this.period_in_ms
+        );
+      }).bind(this));
     },
 
     stop: function stop() {
-      context.clearInterval(synchronizerIntervalId);
-      synchronizerIntervalId = null;
+      context.clearTimeout(synchronizerTimeoutId);
+      synchronizerTimeoutId = null;
     },
 
     registerCache: function registerCache(cache) {
-      if (this.cacheTypeIndices[cache.name] != null) {
+      if (this.cacheTypeIndices[cache.tableName] != null) {
         return;
       }
 
-      this.cacheTypeIndices[cache.name] = this.caches.length;
+      this.cacheTypeIndices[cache.tableName] = this.caches.length;
       this.caches.push(cache);
+    },
+
+    registerErrorCache: function registerErrorCache(cache) {
+      this.errorCache = cache;
+
+      return this;
     },
 
     getCache: function getCache(type) {
