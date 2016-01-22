@@ -96,9 +96,10 @@
       return db.select().from(table).where(table.is_dirty.eq(true)).exec()
                .then(function(dirtyRecords) {
                  return dirtyRecords.map(function(dirtyRecord) {
-                   delete dirtyRecord.is_dirty;
+                   var record = cloneRecord(dirtyRecord);
+                   delete record.is_dirty;
 
-                   return dirtyRecord;
+                   return record;
                   });
                });
     }).bind(this));
