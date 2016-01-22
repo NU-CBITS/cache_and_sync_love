@@ -91,55 +91,6 @@
 
 (function(context) {
     "use strict";
-    var LocalResource = {
-        storeType: lf.schema.DataStoreType.INDEXED_DB,
-        setStoreType: function setStoreType(type) {
-            this.storeType = type;
-            return this;
-        },
-        setSchemaBuilder: function setSchemaBuilder(schemaBuilder) {
-            this.schemaBuilder = schemaBuilder;
-            return this;
-        },
-        setTableName: function setTableName(name) {
-            this.tableName = name;
-            return this;
-        },
-        dbConnection: null,
-        getDbConnection: function getDbConnection() {
-            if (this.dbConnection == null) {
-                this.dbConnection = this.schemaBuilder.connect({
-                    storeType: this.storeType
-                });
-            }
-            return this.dbConnection;
-        },
-        getTable: function getTable() {
-            return this.schemaBuilder.getSchema().table(this.tableName);
-        },
-        createTable: function createTable() {
-            var isAutoIncrementing = true;
-            return this.schemaBuilder.createTable(this.tableName).addColumn("id", lf.Type.INTEGER).addPrimaryKey([ "id" ], isAutoIncrementing);
-        },
-        fetchAll: function fetchAll() {
-            return this.getDbConnection().then(function(db) {
-                return db.select().from(this.getTable()).exec();
-            }.bind(this));
-        },
-        persist: function persist(record) {
-            return this.getDbConnection().then(function(db) {
-                var table = this.getTable();
-                var row = table.createRow(record);
-                return db.insert().into(table).values([ row ]).exec();
-            }.bind(this));
-        }
-    };
-    context.cbit = context.cbit || {};
-    context.cbit.LocalResource = LocalResource;
-})(this);
-
-(function(context) {
-    "use strict";
     function nonce() {
         function randomFixedLengthInteger(length) {
             return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1));
@@ -207,8 +158,17 @@
 
 (function(context) {
     "use strict";
-    var ResourceCache = {
-        storeType: lf.schema.DataStoreType.INDEXED_DB,
+    function cloneRecord(record) {
+        var newRecord = {};
+        for (var attr in record) {
+            if (record.hasOwnProperty(attr)) {
+                newRecord[attr] = record[attr];
+            }
+        }
+        return newRecord;
+    }
+    var PersistedResource = {
+        storeType: context.lf.schema.DataStoreType.INDEXED_DB,
         setStoreType: function setStoreType(type) {
             this.storeType = type;
             return this;
@@ -230,49 +190,68 @@
             }
             return this.dbConnection;
         },
-        getTable: function getTable(db) {
-            return db.getSchema().table(this.tableName);
-        },
-        createTable: function createTable() {
-            return this.schemaBuilder.createTable(this.tableName).addColumn("uuid", lf.Type.STRING).addPrimaryKey([ "uuid" ]).addColumn("is_dirty", lf.Type.BOOLEAN).addColumn("created_at", lf.Type.DATE_TIME).addColumn("updated_at", lf.Type.DATE_TIME);
-        },
-        markClean: function markClean(recordUuids) {
-            return this.getDbConnection().then(function(db) {
-                var table = this.getTable(db);
-                return db.update(table).set(table.is_dirty, false).where(table.uuid.in(recordUuids)).exec();
-            }.bind(this));
+        getTable: function getTable() {
+            return this.schemaBuilder.getSchema().table(this.tableName);
         },
         fetch: function fetch(recordUuid) {
             return this.getDbConnection().then(function(db) {
-                var table = this.getTable(db);
+                var table = this.getTable();
                 return db.select().from(table).where(table.uuid.eq(recordUuid)).exec();
             }.bind(this));
         },
         fetchAll: function fetchAll() {
             return this.getDbConnection().then(function(db) {
-                return db.select().from(this.getTable(db)).exec();
-            }.bind(this));
-        },
-        fetchAllDirty: function fetchAllDirty() {
-            return this.getDbConnection().then(function(db) {
-                var table = this.getTable(db);
-                return db.select().from(table).where(table.is_dirty.eq(true)).exec();
-            }.bind(this));
-        },
-        persist: function persist(record) {
-            return this.getDbConnection().then(function(db) {
-                var table = this.getTable(db), dirtyRecord = Object.create(record);
-                dirtyRecord.uuid = cbit.uuid();
-                dirtyRecord.created_at = new Date();
-                dirtyRecord.updated_at = new Date();
-                dirtyRecord.is_dirty = true;
-                var row = table.createRow(dirtyRecord);
-                return db.insert().into(table).values([ row ]).exec();
+                return db.select().from(this.getTable()).exec();
             }.bind(this));
         }
     };
+    var ResourceCache = Object.create(PersistedResource);
+    ResourceCache.createTable = function createTable() {
+        return this.schemaBuilder.createTable(this.tableName).addColumn("uuid", lf.Type.STRING).addPrimaryKey([ "uuid" ]).addColumn("is_dirty", lf.Type.BOOLEAN).addColumn("created_at", lf.Type.DATE_TIME).addColumn("updated_at", lf.Type.DATE_TIME);
+    };
+    ResourceCache.markClean = function markClean(recordUuids) {
+        return this.getDbConnection().then(function(db) {
+            var table = this.getTable();
+            return db.update(table).set(table.is_dirty, false).where(table.uuid.in(recordUuids)).exec();
+        }.bind(this));
+    };
+    ResourceCache.fetchAllDirty = function fetchAllDirty() {
+        return this.getDbConnection().then(function(db) {
+            var table = this.getTable();
+            return db.select().from(table).where(table.is_dirty.eq(true)).exec().then(function(dirtyRecords) {
+                return dirtyRecords.map(function(dirtyRecord) {
+                    delete dirtyRecord.is_dirty;
+                    return dirtyRecord;
+                });
+            });
+        }.bind(this));
+    };
+    ResourceCache.persist = function persist(record) {
+        return this.getDbConnection().then(function(db) {
+            var table = this.getTable(), dirtyRecord = cloneRecord(record);
+            dirtyRecord.uuid = cbit.uuid();
+            dirtyRecord.created_at = new Date();
+            dirtyRecord.updated_at = new Date();
+            dirtyRecord.is_dirty = true;
+            var row = table.createRow(dirtyRecord);
+            return db.insert().into(table).values([ row ]).exec();
+        }.bind(this));
+    };
+    var LocalResource = Object.create(PersistedResource);
+    LocalResource.createTable = function createTable() {
+        var isAutoIncrementing = true;
+        return this.schemaBuilder.createTable(this.tableName).addColumn("id", lf.Type.INTEGER).addPrimaryKey([ "id" ], isAutoIncrementing);
+    };
+    LocalResource.persist = function persist(record) {
+        return this.getDbConnection().then(function(db) {
+            var table = this.getTable();
+            var row = table.createRow(record);
+            return db.insert().into(table).values([ row ]).exec();
+        }.bind(this));
+    };
     context.cbit = context.cbit || {};
     context.cbit.ResourceCache = ResourceCache;
+    context.cbit.LocalResource = LocalResource;
 })(this);
 
 (function(context) {
@@ -286,27 +265,38 @@
         if (!cache) {
             return;
         }
-        cache.markClean(this.connection, response.data.map(function(d) {
-            return d.uuid;
+        cache.markClean(response.data.map(function(d) {
+            return d.id;
         }));
     }
     function collectDirtyData(cache) {
-        return cache.fetchAllDirty(this.connection);
-    }
-    function persistDirtyData(payload) {
-        return Promise.all(this.caches.map(collectDirtyData.bind(this))).then(function(dirtyData) {
-            var flatData = [];
-            dirtyData.forEach(function(d) {
-                flatData = flatData.concat(d);
+        return cache.fetchAllDirty().then(function(dirtyRecords) {
+            return dirtyRecords.map(function(dirtyRecord) {
+                dirtyRecord.type = cache.tableName;
+                return dirtyRecord;
             });
-            return payload.setData(flatData).persist();
+        });
+    }
+    function transmitDirtyData(payload) {
+        return Promise.all(this.caches.map(collectDirtyData.bind(this))).then(function(dirtyData) {
+            if (dirtyData.some(function(d) {
+                return d.length > 0;
+            })) {
+                var flatData = dirtyData.reduce(function(a, b) {
+                    return a.concat(b);
+                }, []);
+                return payload.setData(flatData).persist();
+            }
+            return {
+                data: []
+            };
         }).then(markCacheRecordsClean.bind(this));
     }
     function persistClean(datum) {
         var cache = Synchronizer.getCache(datum.type);
         if (cache) {
-            cache.persist(this.connection, datum);
-            cache.markClean(this.connection, datum.uuid);
+            cache.persist(datum);
+            cache.markClean([ datum.id ]);
         }
     }
     function fetchData(payload) {
@@ -314,15 +304,11 @@
             response.data.forEach(persistClean.bind(this));
         }.bind(this));
     }
-    var synchronizerIntervalId = null;
+    var synchronizerTimeoutId = null;
     var Synchronizer = {
         period_in_ms: 30 * 1e3,
         setPeriod: function setPeriod(period) {
             this.period_in_ms = period;
-            return this;
-        },
-        setDbConnection: function setDbConnection(connection) {
-            this.connection = connection;
             return this;
         },
         setNetwork: function setNetwork(network) {
@@ -337,25 +323,34 @@
                 return;
             }
             var persistPayload = Object.create(this.Payload), fetchPayload = Object.create(this.Payload);
-            return Promise.all([ persistDirtyData.bind(this)(persistPayload), fetchData.bind(this)(fetchPayload) ]);
+            return Promise.all([ transmitDirtyData.bind(this)(persistPayload), fetchData.bind(this)(fetchPayload) ]).catch(function(result) {
+                if (this.errorCache != null) {
+                    this.errorCache.persist({
+                        value: result
+                    });
+                }
+            }.bind(this));
         },
         run: function run() {
-            if (synchronizerIntervalId != null) {
-                return;
-            }
-            this.synchronize();
-            synchronizerIntervalId = context.setInterval(this.run.bind(this), this.period_in_ms);
+            this.stop();
+            this.synchronize().then(function() {
+                synchronizerTimeoutId = context.setTimeout(this.run.bind(this), this.period_in_ms);
+            }.bind(this));
         },
         stop: function stop() {
-            context.clearInterval(synchronizerIntervalId);
-            synchronizerIntervalId = null;
+            context.clearTimeout(synchronizerTimeoutId);
+            synchronizerTimeoutId = null;
         },
         registerCache: function registerCache(cache) {
-            if (this.cacheTypeIndices[cache.name] != null) {
+            if (this.cacheTypeIndices[cache.tableName] != null) {
                 return;
             }
-            this.cacheTypeIndices[cache.name] = this.caches.length;
+            this.cacheTypeIndices[cache.tableName] = this.caches.length;
             this.caches.push(cache);
+        },
+        registerErrorCache: function registerErrorCache(cache) {
+            this.errorCache = cache;
+            return this;
         },
         getCache: function getCache(type) {
             return this.caches[this.cacheTypeIndices[type]];
