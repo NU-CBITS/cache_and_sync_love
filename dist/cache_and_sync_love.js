@@ -220,8 +220,9 @@
             var table = this.getTable();
             return db.select().from(table).where(table.is_dirty.eq(true)).exec().then(function(dirtyRecords) {
                 return dirtyRecords.map(function(dirtyRecord) {
-                    delete dirtyRecord.is_dirty;
-                    return dirtyRecord;
+                    var record = cloneRecord(dirtyRecord);
+                    delete record.is_dirty;
+                    return record;
                 });
             });
         }.bind(this));

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.10 - 2016-01-22
+
+* do not mutate returned records from db queries
+
 ## 0.1.9 - 2016-01-22
 
 * ensure record cloning works
