@@ -1,6 +1,18 @@
 (function(context) {
   'use strict';
 
+  function cloneRecord(record) {
+    var newRecord = {};
+
+    for (var attr in record) {
+      if (record.hasOwnProperty(attr)) {
+        newRecord[attr] = record[attr];
+      }
+    }
+
+    return newRecord;
+  }
+
   var PersistedResource = {
     storeType: context.lf.schema.DataStoreType.INDEXED_DB,
 
@@ -95,7 +107,7 @@
   ResourceCache.persist = function persist(record) {
     return this.getDbConnection().then((function(db) {
       var table = this.getTable(),
-          dirtyRecord = Object.create(record);
+          dirtyRecord = cloneRecord(record);
       dirtyRecord.uuid = cbit.uuid();
       dirtyRecord.created_at = new Date();
       dirtyRecord.updated_at = new Date();

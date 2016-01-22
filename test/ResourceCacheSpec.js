@@ -9,6 +9,16 @@ describe('ResourceCache', function() {
     return lf.schema.create(DB_NAME, 1);
   }
 
+  function getCache() {
+    var cache = Object.create(ResourceCache)
+                      .setSchemaBuilder(getSchemaBuilder())
+                      .setTableName('my_table')
+                      .setStoreType(lf.schema.DataStoreType.MEMORY);
+    cache.createTable();
+
+    return cache;
+  }
+
   describe('#createTable', function() {
     describe('when no schemaBuilder property is assigned', function() {
       it('throws an exception', function() {
@@ -46,11 +56,7 @@ describe('ResourceCache', function() {
   describe('#markClean', function() {
     describe('when a dirty record exists', function() {
       it('marks it clean', function(done) {
-        var cache = Object.create(ResourceCache)
-          .setSchemaBuilder(getSchemaBuilder())
-          .setTableName('my_table')
-          .setStoreType(lf.schema.DataStoreType.MEMORY);
-        cache.createTable();
+        var cache = getCache();
         cache.persist({}).then(function(records) {
           var uuid = records[0].uuid;
           cache.markClean([uuid]).then(function() {
@@ -69,11 +75,7 @@ describe('ResourceCache', function() {
 
   describe('#fetchAll', function() {
     it('returns all records in the table', function(done) {
-      var cache = Object.create(ResourceCache);
-      cache.setSchemaBuilder(getSchemaBuilder());
-      cache.setTableName('my_table');
-      cache.setStoreType(lf.schema.DataStoreType.MEMORY);
-      cache.createTable();
+      var cache = getCache();
       cache.persist({}).then(function(records) {
         var uuid = records[0].uuid;
         cache.fetchAll().then(function(records) {
@@ -88,16 +90,6 @@ describe('ResourceCache', function() {
   });
 
   describe('#fetchAllDirty', function() {
-    function getCache() {
-      var cache = Object.create(ResourceCache);
-      cache.setSchemaBuilder(getSchemaBuilder());
-      cache.setTableName('my_table');
-      cache.setStoreType(lf.schema.DataStoreType.MEMORY);
-      cache.createTable();
-
-      return cache;
-    }
-
     it('returns all dirty records in the table', function(done) {
       var cache = getCache();
       cache.persist({}).then(function(records) {
@@ -122,6 +114,25 @@ describe('ResourceCache', function() {
             done.fail('should not select "is_dirty" column');
           }
         });
+      });
+    });
+  });
+
+  describe('#persist', function() {
+    it('stores a record in the database with metadata', function(done) {
+      var cache = getCache();
+      cache.persist({ foo: 'bar' }).then(function(records) {
+        if (records.length === 1 &&
+            records[0].uuid != null &&
+            records[0].is_dirty == true &&
+            records[0].created_at != null &&
+            records[0].updated_at != null &&
+            records[0].hasOwnProperty('foo') &&
+            records[0].foo === 'bar') {
+          done();
+        } else {
+          done.fail('should store records');
+        }
       });
     });
   });

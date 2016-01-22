@@ -9,6 +9,16 @@ describe('LocalResource', function() {
     return lf.schema.create(DB_NAME, 1);
   }
 
+  function getCache() {
+    var cache = Object.create(LocalResource)
+                      .setSchemaBuilder(getSchemaBuilder())
+                      .setTableName('my_table')
+                      .setStoreType(lf.schema.DataStoreType.MEMORY);
+    cache.createTable();
+
+    return cache;
+  }
+
   describe('#createTable', function() {
     describe('when no schemaBuilder property is assigned', function() {
       it('throws an exception', function() {
@@ -45,11 +55,7 @@ describe('LocalResource', function() {
 
   describe('#fetchAll', function() {
     it('returns all records in the table', function(done) {
-      var cache = Object.create(LocalResource)
-        .setSchemaBuilder(getSchemaBuilder())
-        .setTableName('my_table')
-        .setStoreType(lf.schema.DataStoreType.MEMORY)
-      cache.createTable();
+      var cache = getCache();
       cache.persist({}).then(function(records) {
         var id = records[0].id;
         cache.fetchAll().then(function(records) {
@@ -62,6 +68,21 @@ describe('LocalResource', function() {
             done.fail('record should be returned');
           }
         });
+      });
+    });
+  });
+
+  describe('#persist', function() {
+    it('stores a record in the database', function(done) {
+      var cache = getCache();
+      cache.persist({ foo: 'bar' }).then(function(records) {
+        if (records.length === 1 &&
+            records[0].hasOwnProperty('foo') &&
+            records[0].foo === 'bar') {
+          done();
+        } else {
+          done.fail('should store records');
+        }
       });
     });
   });
