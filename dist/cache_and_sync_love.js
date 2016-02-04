@@ -230,12 +230,19 @@
     ResourceCache.persist = function persist(record) {
         return this.getDbConnection().then(function(db) {
             var table = this.getTable(), dirtyRecord = cloneRecord(record);
-            dirtyRecord.uuid = cbit.uuid();
-            dirtyRecord.created_at = new Date();
+            dirtyRecord.uuid = dirtyRecord.uuid || cbit.uuid();
             dirtyRecord.updated_at = new Date();
             dirtyRecord.is_dirty = true;
-            var row = table.createRow(dirtyRecord);
-            return db.insert().into(table).values([ row ]).exec();
+            return this.fetch(dirtyRecord.uuid).then(function(records) {
+                var row;
+                if (records.length === 1) {
+                    dirtyRecord.created_at = records[0].created_at;
+                } else {
+                    dirtyRecord.created_at = new Date();
+                }
+                row = table.createRow(dirtyRecord);
+                return db.insertOrReplace().into(table).values([ row ]).exec();
+            });
         }.bind(this));
     };
     var LocalResource = Object.create(PersistedResource);
