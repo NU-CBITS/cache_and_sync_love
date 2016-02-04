@@ -135,5 +135,27 @@ describe('ResourceCache', function() {
         }
       });
     });
+
+    describe('when a uuid is provided', function() {
+      it('updates an existing record', function(done) {
+        var cache = getCache();
+        cache.persist({ foo: 'bar' }).then(function(records) {
+          var uuid = records[0].uuid;
+          cache.persist({ uuid: uuid, foo: 'bar2' }).then(function(updatedRecords) {
+            if (updatedRecords.length === 1 &&
+                updatedRecords[0].uuid === uuid &&
+                updatedRecords[0].is_dirty == true &&
+                updatedRecords[0].created_at.valueOf() === records[0].created_at.valueOf() &&
+                updatedRecords[0].updated_at !== records[0].updated_at.valueOf() &&
+                updatedRecords[0].hasOwnProperty('foo') &&
+                updatedRecords[0].foo === 'bar2') {
+              done();
+            } else {
+              done.fail('should update records');
+            }
+          });
+        });
+      });
+    });
   });
 });
