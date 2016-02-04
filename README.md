@@ -32,6 +32,18 @@ or the [ES2015 Promise polyfill](https://github.com/jakearchibald/es6-promise).
 
 ## Development
 
+To install the dependencies, run
+
+```
+npm install
+```
+
+To run the tests, use
+
+```
+npm run test
+```
+
 To build the distribution version, run
 
 ```
