@@ -38,10 +38,16 @@ To install the dependencies, run
 npm install
 ```
 
-To run the tests, use
+To run the tests in Chrome, Firefox, and PhantomJS use
 
 ```
-npm run test
+npm test
+```
+
+To run tests only in PhantomJS use
+
+```
+npm run test:ci
 ```
 
 To build the distribution version, run
@@ -56,8 +62,9 @@ It will create both the beautified and the minified files
 To publish, once all changes have been committed, run
 
 ```
-npm version <type>
+npm version [major|minor|patch]
 npm publish
+git push origin master --tags
 ```
 
 See the documentation for `npm version` with
