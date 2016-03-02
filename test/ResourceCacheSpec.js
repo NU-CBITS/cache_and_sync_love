@@ -125,8 +125,8 @@ describe('ResourceCache', function() {
         if (records.length === 1 &&
             records[0].uuid != null &&
             records[0].is_dirty == true &&
-            records[0].created_at != null &&
-            records[0].updated_at != null &&
+            records[0].client_created_at != null &&
+            records[0].client_updated_at != null &&
             records[0].hasOwnProperty('foo') &&
             records[0].foo === 'bar') {
           done();
@@ -145,8 +145,9 @@ describe('ResourceCache', function() {
             if (updatedRecords.length === 1 &&
                 updatedRecords[0].uuid === uuid &&
                 updatedRecords[0].is_dirty == true &&
-                updatedRecords[0].created_at.valueOf() === records[0].created_at.valueOf() &&
-                updatedRecords[0].updated_at !== records[0].updated_at.valueOf() &&
+                updatedRecords[0].client_created_at.valueOf() ===
+                  records[0].client_created_at.valueOf() &&
+                updatedRecords[0].client_updated_at !== records[0].client_updated_at.valueOf() &&
                 updatedRecords[0].hasOwnProperty('foo') &&
                 updatedRecords[0].foo === 'bar2') {
               done();
