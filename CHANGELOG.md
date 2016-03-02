@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.12 - 2016-03-02
+
+* change created_at and updated_at to client_created_at and client_updated_at
+
 ## 0.1.10 - 2016-01-22
 
 * do not mutate returned records from db queries

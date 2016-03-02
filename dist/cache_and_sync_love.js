@@ -207,7 +207,7 @@
     };
     var ResourceCache = Object.create(PersistedResource);
     ResourceCache.createTable = function createTable() {
-        return this.schemaBuilder.createTable(this.tableName).addColumn("uuid", lf.Type.STRING).addPrimaryKey([ "uuid" ]).addColumn("is_dirty", lf.Type.BOOLEAN).addColumn("created_at", lf.Type.DATE_TIME).addColumn("updated_at", lf.Type.DATE_TIME);
+        return this.schemaBuilder.createTable(this.tableName).addColumn("uuid", lf.Type.STRING).addPrimaryKey([ "uuid" ]).addColumn("is_dirty", lf.Type.BOOLEAN).addColumn("client_created_at", lf.Type.DATE_TIME).addColumn("client_updated_at", lf.Type.DATE_TIME);
     };
     ResourceCache.markClean = function markClean(recordUuids) {
         return this.getDbConnection().then(function(db) {
@@ -231,14 +231,14 @@
         return this.getDbConnection().then(function(db) {
             var table = this.getTable(), dirtyRecord = cloneRecord(record);
             dirtyRecord.uuid = dirtyRecord.uuid || cbit.uuid();
-            dirtyRecord.updated_at = new Date();
+            dirtyRecord.client_updated_at = new Date();
             dirtyRecord.is_dirty = true;
             return this.fetch(dirtyRecord.uuid).then(function(records) {
                 var row;
                 if (records.length === 1) {
-                    dirtyRecord.created_at = records[0].created_at;
+                    dirtyRecord.client_created_at = records[0].client_created_at;
                 } else {
-                    dirtyRecord.created_at = new Date();
+                    dirtyRecord.client_created_at = new Date();
                 }
                 row = table.createRow(dirtyRecord);
                 return db.insertOrReplace().into(table).values([ row ]).exec();
