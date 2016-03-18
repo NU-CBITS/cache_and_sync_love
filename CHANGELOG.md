@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 - 2016-03-18
+
+* fetch recently updated resources
+* update README test and build instructions
+
 ## 0.1.12 - 2016-03-02
 
 * change created_at and updated_at to client_created_at and client_updated_at
