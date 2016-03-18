@@ -5,6 +5,27 @@ var Synchronizer = cbit.Synchronizer;
 describe('Synchronizer', function() {
   var online = { hasConnection: function() { return true; } };
 
+  function emptyCache() {
+    return {
+      tableName: 'mock_data',
+      fetchAllDirty: function() {
+        return new Promise(function(resolve) {
+          resolve([]);
+        });
+      },
+      persist: function() {
+        return new Promise(function(resolve) {
+          resolve([]);
+        });
+      },
+      markClean: function() {
+        return new Promise(function(resolve) {
+          resolve([]);
+        });
+      }
+    };
+  }
+
   afterEach(function() {
     Synchronizer.resetCaches();
   });
@@ -205,37 +226,61 @@ describe('Synchronizer', function() {
         });
       });
 
+      it('fetches data from the server filtered by the last timestamp', function(done) {
+        var cache = emptyCache();
+        Synchronizer
+          .setNetwork(online)
+          .setPayloadResource(payload)
+          .setLastFetchTimestamp('2015-02-05T12:34:56.000Z');
+        Synchronizer.registerCache(cache);
+
+        spyOn(payload, 'fetch').and.callThrough();
+        Synchronizer.synchronize().then(function() {
+          expect(payload.fetch).toHaveBeenCalledWith({ gt: '2015-02-05T12:34:56.000Z' });
+          done();
+        }).catch(done.fail);
+      });
+
+      it('stores the server timestamp when it fetches', function(done) {
+        var cache = emptyCache();
+        Synchronizer
+          .setNetwork(online)
+          .setPayloadResource(payload);
+        Synchronizer.registerCache(cache);
+        fetchedPayload = { meta: { timestamp: '2016-12-08T12:34:56.000Z' }, data: [] };
+
+        Synchronizer.synchronize().then(function() {
+          expect(Synchronizer.last_fetch_timestamp).toEqual('2016-12-08T12:34:56.000Z');
+          done();
+        }).catch(done.fail);
+      });
+
       describe('and it fetches data from the server', function() {
         describe('and the data type corresponds to a registered cache', function() {
           it('persists the data to the cache', function(done) {
-            var cache = {
-              tableName: 'mock_data',
-              fetchAllDirty: function() {
-                return new Promise(function(resolve) {
-                  resolve([]);
-                });
-              },
-              persist: function() {
-                return new Promise(function(resolve) {
-                  resolve([]);
-                });
-              },
-              markClean: function() {
-                return new Promise(function(resolve) {
-                  resolve([]);
-                });
-              }
-            };
+            var cache = emptyCache(),
+                fetchedDatum = {
+                  id: '123',
+                  type: 'mock_data',
+                  attributes: {
+                    foo: 'bar',
+                    quux: '2014-04-01T12:34:56.789Z'
+                  }
+                };
             Synchronizer.setNetwork(online);
             Synchronizer.setPayloadResource(payload);
             Synchronizer.registerCache(cache);
-            fetchedPayload = { data: [datum] };
+            fetchedPayload = { data: [fetchedDatum] };
 
             spyOn(payload, 'fetch').and.callThrough();
             spyOn(cache, 'persist').and.callThrough();
             Synchronizer.synchronize().then(function() {
               expect(payload.fetch).toHaveBeenCalled();
-              expect(cache.persist).toHaveBeenCalled();
+              expect(cache.persist).toHaveBeenCalledWith({
+                uuid: '123',
+                foo: 'bar',
+                quux: new Date('2014-04-01T12:34:56.789Z')
+              });
               done();
             }).catch(done.fail);
           });

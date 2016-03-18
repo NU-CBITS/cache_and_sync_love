@@ -153,4 +153,5 @@
   context.cbit = context.cbit || {};
   context.cbit.ResourceCache = ResourceCache;
   context.cbit.LocalResource = LocalResource;
+  context.cbit.cloneRecord = cloneRecord;
 })(this);

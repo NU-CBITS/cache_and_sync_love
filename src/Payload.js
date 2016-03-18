@@ -93,10 +93,11 @@
       });
     },
 
-    fetch: function fetch() {
+    fetch: function fetch(filter) {
+      var filterQuery = filter == null ? '' : '?filter[updated_at][gt]=' + filter.gt;
       this.setMethod('GET');
 
-      return cbit.Ajax.get(this.url, this.toHeader());
+      return cbit.Ajax.get(this.url + filterQuery, this.toHeader());
     }
   };
 

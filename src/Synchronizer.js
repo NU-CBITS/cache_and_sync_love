@@ -41,18 +41,40 @@
       .then(markCacheRecordsClean.bind(this));
   }
 
-  function persistClean(datum) {
-    var cache = Synchronizer.getCache(datum.type);
+  function convertToAttributes(resourceDatum) {
+    var datum = context.cbit.cloneRecord(resourceDatum.attributes);
+    var ISO8601 = /\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ/;
+    for (var attr in datum) {
+      if (typeof datum[attr] === 'string' &&
+          datum[attr].match(ISO8601) != null) {
+        datum[attr] = new Date(datum[attr]);
+      }
+    }
+    datum.uuid = resourceDatum.id;
+
+    return datum;
+  }
+
+  function persistClean(resourceDatum) {
+    var cache = Synchronizer.getCache(resourceDatum.type),
+        datum = convertToAttributes(resourceDatum);
 
     if (cache) {
-      cache.persist(datum);
-      cache.markClean([datum.id]);
+      cache.persist(datum).then(function() {
+        cache.markClean([datum.uuid]);
+      });
     }
   }
 
   function fetchData(payload) {
-    return payload.fetch().then((function(response) {
-      response.data.forEach(persistClean.bind(this));
+    var filter = this.last_fetch_timestamp == null ? null : { gt: this.last_fetch_timestamp };
+
+    return payload.fetch(filter).then((function(response) {
+      response.data.forEach(persistClean);
+
+      if (response.meta != null) {
+        this.setLastFetchTimestamp(response.meta.timestamp);
+      }
     }).bind(this));
   }
 
@@ -60,6 +82,8 @@
 
   var Synchronizer = {
     period_in_ms: 30 * 1000,
+
+    last_fetch_timestamp: null,
 
     setPeriod: function setPeriod(period) {
       this.period_in_ms = period;
@@ -75,6 +99,14 @@
 
     setPayloadResource: function setPayloadResource(Payload) {
       this.Payload = Payload;
+
+      return this;
+    },
+
+    setLastFetchTimestamp: function setLastFetchTimestamp(timestamp) {
+      this.last_fetch_timestamp = timestamp;
+
+      return this;
     },
 
     synchronize: function synchronize() {
