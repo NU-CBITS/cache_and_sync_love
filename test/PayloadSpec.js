@@ -57,4 +57,30 @@ describe('Payload', function() {
       );
     });
   });
+
+  describe('.fetch', function() {
+    describe('when no filter is present', function() {
+      it('transmits a plain query', function() {
+        var payload = dummyPayload();
+        spyOn(cbit.Ajax, 'get').and.stub;
+
+        payload.fetch();
+
+        expect(cbit.Ajax.get).toHaveBeenCalledWith('https://api.example.com', payload.toHeader());
+      });
+    });
+
+    describe('when a filter is present', function() {
+      it('transmits a query with filter params', function() {
+        var payload = dummyPayload();
+        spyOn(cbit.Ajax, 'get').and.stub;
+
+        payload.fetch({ gt: 'custom-timestamp' });
+
+        expect(cbit.Ajax.get)
+          .toHaveBeenCalledWith('https://api.example.com?filter[updated_at][gt]=custom-timestamp',
+                                payload.toHeader());
+      });
+    });
+  });
 });
