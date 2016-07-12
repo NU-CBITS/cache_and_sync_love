@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2016-07-11
+
+* ensure data transmit is before data pull on sync
+
 ## 0.2.0 - 2016-03-18
 
 * fetch recently updated resources
