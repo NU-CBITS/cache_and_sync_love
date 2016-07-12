@@ -115,14 +115,13 @@
       var persistPayload = Object.create(this.Payload),
           fetchPayload = Object.create(this.Payload);
 
-      return Promise.all([
-        transmitDirtyData.bind(this)(persistPayload),
-        fetchData.bind(this)(fetchPayload)
-      ]).catch((function(result) {
-        if (this.errorCache != null) {
-          this.errorCache.persist({ value: result });
-        }
-      }).bind(this));
+      return transmitDirtyData.bind(this)(persistPayload)
+             .then(function() { fetchData.bind(this)(fetchPayload); }.bind(this))
+             .catch((function(result) {
+               if (this.errorCache != null) {
+                 this.errorCache.persist({ value: result });
+               }
+             }).bind(this));
     },
 
     run: function run() {
