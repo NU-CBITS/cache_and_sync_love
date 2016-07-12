@@ -1,7 +1,12 @@
 sudo: required
 dist: trusty
 language: node_js
+node_js:
+  - '6.3.0'
+cache:
+  directories:
+    - node_modules
 before_script:
-- export "PHANTOMJS_BIN=`which phantomjs`"
+  - export "PHANTOMJS_BIN=`which phantomjs`"
 script:
-- npm run test:ci
+  - npm run test:ci
