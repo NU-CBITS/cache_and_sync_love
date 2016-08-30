@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2016-08-30
+
+* push then pull data; update sourcemap url
+
 ## 0.2.0 - 2016-03-18
 
 * fetch recently updated resources
